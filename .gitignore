@@ -34,4 +34,7 @@ __pycache__/
 /dist
 
 # Cathedral documents
-/resources/tables/*
+/resources/tables
+
+# Data obtained by parsing individual teaching plans
+/received_data
