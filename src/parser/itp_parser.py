@@ -182,8 +182,7 @@ def parse_summary_data(file_path: str) -> None:
             break
         else:
             if "в том числе:" in iter_cell_with_type_of_work:
-                iter_cell_with_type_of_work = "в том числе"
-                iter_cell_with_number_of_hours = ""
+                continue
             if "Всего:" in iter_cell_with_type_of_work:
                 teachers_total_number_of_hours = round(float(iter_cell_with_number_of_hours), 1)
                 break
