@@ -6,7 +6,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 
-_console = Console()
+_console = Console(width = 200)
 
 
 class Rich:
