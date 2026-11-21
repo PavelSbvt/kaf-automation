@@ -71,3 +71,109 @@ class TeacherSummaryInfo:
 
     # Итоговая информация по общему количеству часов
     total_hours: float
+
+
+@dataclass
+class InformationOnDisciplineOfAcademicWork:
+    """
+    Датакласс для хранения информации по дисциплине из учебной работы преподавателя.
+    Информация из листа 1.1 таблицы ИПП
+    """
+    # Наименование дисциплины
+    name_of_discipline: str
+    # Группа
+    group: str
+    # Номер семестра
+    number_of_semester: int
+    # Лекции
+    lectures: float
+    # Практические занятия
+    practical_training: float
+    # Лабораторные работы
+    laboratory_work: float
+    # Консультации
+    consultations: float
+    # Экзамены
+    exams: float
+    # Зачёты
+    credits: float
+    # Курсовые работы, курсовые проекты
+    term_papers_and_works: float
+    # Практика
+    practice: float
+    # ВКР
+    WRC: float
+    # ГЭК
+    GEK: float
+    # Дополнительные работы
+    additional_work: float
+    # Всего по плану
+    total_according_plan: float
+    # Фактически выполнено за семестр
+    total_actually: float
+
+
+@dataclass
+class TeachersSummaryInfoOnHoursOfWorkPerSemester:
+    """
+    Датакласс для хранения информации по итоговому количеству часов по
+     учебной работе преподавателя в семестре их листа 1.1. таблицы ИПП
+    """
+
+    summary_lectures: float
+    """Лекции - итоговое количество часов за семестр"""
+
+    summary_practical_training: float
+    """Практические занятия - итоговое количество часов за семестр"""
+
+    summary_laboratory_work: float
+    """Лабораторные работы - итоговое количество часов за семестр"""
+
+    summary_consultations: float
+    """Консультации - итоговое количество часов за семестр"""
+
+    summary_exams: float
+    """Экзамены - итоговое количество часов за семестр"""
+
+    summary_credits: float
+    """Зачёты - итоговое количество часов за семестр"""
+
+    summary_term_papers_and_works: float
+    """Курсовые работы, курсовые проекты - итоговое количество часов за семестр"""
+
+    summary_practice: float
+    """Практика - итоговое количество часов за семестр"""
+
+    summary_WRC: float
+    """ВКР - итоговое количество часов за семестр"""
+
+    summary_GEK: float
+    """ГЭК - итоговое количество часов за семестр"""
+
+    summary_additional_work: float
+    """Дополнительные работы - итоговое количество часов за семестр"""
+
+    summary_total_according_plan: float
+    """Всего по плану - итоговое количество часов за семестр"""
+
+    summary_total_actually: float
+    """Фактически выполнено за семестр - итоговое количество часов за семестр"""
+
+
+@dataclass
+class TeacherAcademicWorkPerSemester:
+    """
+    Датакласс для хранения данных по учебной работы преподавателя по одному семестру
+    (осеннему или весеннему).
+    Данные из листа "1.1. " ИПП.
+    """
+
+    semester: str
+    """Семестр"""
+
+    disciplines: List[InformationOnDisciplineOfAcademicWork]
+    """Список дисциплин с информацией по каждой"""
+
+    summary_data_of_hours: TeachersSummaryInfoOnHoursOfWorkPerSemester
+    """Список с итоговой информацией по часам работы преподавателя в семестре"""
+
