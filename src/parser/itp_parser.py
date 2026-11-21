@@ -6,7 +6,10 @@ from openpyxl import load_workbook, Workbook
 from core.models import (
     TeacherGeneralInfo,
     DataNamesOfWorksFromSummaryInfo,
-    TeacherSummaryInfo)
+    TeacherSummaryInfo,
+    InformationOnDisciplineOfAcademicWork,
+    TeachersSummaryInfoOnHoursOfWorkPerSemester,
+    TeacherAcademicWorkPerSemester)
 from utils.output_rich import Rich
 from utils.utils_funcs import get_path_resources_file
 
@@ -31,7 +34,7 @@ def load_table(table_path: str) -> Workbook | None:
         Rich.print_spacer()
         return ipt_workbook
     except Exception as e:
-        Rich.warning_log("Не удалось загрузить таблицу")
+        Rich.warning_log(f"Не удалось загрузить таблицу. Ошибка {e}")
         Rich.print_spacer()
         return None
 
@@ -148,7 +151,7 @@ def parse_general_info_sheet(file_path: str) -> None:
     return None
 
 
-def parse_summary_data(file_path: str) -> None:
+def parse_summary_data_sheet(file_path: str) -> None:
     """
     Функция для паргинга листа "Сводные данные" из таблицы ИПП
     :return: None
@@ -207,3 +210,318 @@ def parse_summary_data(file_path: str) -> None:
 
     ITP_TEACHERS_SUMMARY_DATA.append(summary_data_from_table)
     Rich.print_spacer()
+
+
+list_with_semesters_data: List[TeacherAcademicWorkPerSemester] = []
+
+def parse_educational_work_sheet(file_path: str) -> None:
+    """
+    Функция для парсинга листа 1.1 "Учебная работа" из талицы ИПП для получения
+    информации о дисциплинах, типах занятий, количестве часов, группах и
+    другой информации по учебной работе преподавателя.
+    :param file_path: путь к файлу таблицы
+    :return: None
+    """
+    individual_plan = load_table(get_path_resources_file(file_path))
+    # Открываю лист с учебной работой - лист 1.1.
+    educational_work_data = individual_plan["1.1. "]
+    Rich.print_spacer()
+    # Вывод шапки листа
+    Rich.simple_log(" ".join((educational_work_data['A1'].value).split()))
+
+    current_semester = ""
+    subject_name = ""
+    current_group = ""
+    educational_semester = -1
+    hours_of_lectures = -1.0
+    hours_of_practice_lessons = -1.0
+    hours_of_laboratory_work = -1.0
+    hours_of_consultations = -1.0
+    hours_of_exams = -1.0
+    hours_of_credits = -1.0
+    hours_of_terms_works = -1.0
+    hours_of_practice = -1.0
+    hours_WRC = -1.0
+    hours_of_GEC = -1.0
+    hours_of_additional_works = -1.0
+    hours_of_total_according_to_plan = -1.0
+    hours_of_total_actually = -1.0
+
+    list_of_disciplines_in_semester: List[InformationOnDisciplineOfAcademicWork] = []
+
+    for row in range(5, educational_work_data.max_row - 4):
+        # парсинг данных
+
+        # парсинг по дисциплинам
+
+        # семестр
+        if not educational_work_data[f"A{row}"].value is None:
+            if ("семестр" in educational_work_data[f"A{row}"].value
+                    and not ("Итого за семестр"
+                             in educational_work_data[f"A{row}"].value)
+                    and not ("Фактически выполнено за семестр"
+                             in educational_work_data[f"A{row}"].value)):
+                current_semester = educational_work_data[f"A{row}"].value
+                Rich.simple_log(f"Семестр: {current_semester}")
+
+        if (not educational_work_data[f'A{row}'].value is None
+            and not "семестр" in educational_work_data[f'A{row}'].value):
+
+            # Дальше парсинг данных по дисциплинам
+            # название дисциплины
+            subject_name = educational_work_data[f'A{row}'].value
+            Rich.debug_log(f"Дисциплина: {subject_name}")
+
+            # Группа
+            if not educational_work_data[f'C{row}'].value is None:
+                current_group = educational_work_data[f'C{row}'].value
+                Rich.debug_log(f"Группа: {current_group}")
+
+            # Номер семестра (семестра обучения группы)
+            educational_semester = educational_work_data[f'D{row}'].value
+            Rich.debug_log(f"Номер семестра: {educational_semester}")
+
+            # Количество часов лекций
+            hours_of_lectures = educational_work_data[f'E{row}'].value
+            if hours_of_lectures is None:
+                hours_of_lectures = 0
+            Rich.debug_log(f"Часов лекций: {hours_of_lectures}")
+
+            # Количество часов практики
+            hours_of_practice_lessons = educational_work_data[f'F{row}'].value
+            if  hours_of_practice_lessons is None:
+                hours_of_practice_lessons = 0
+            Rich.debug_log(f"Часов практики: {hours_of_practice_lessons}")
+
+            # Количество часов лабораторных работ
+            hours_of_laboratory_work = educational_work_data[f'G{row}'].value
+            if hours_of_laboratory_work is None:
+                hours_of_laboratory_work = 0
+            Rich.debug_log(f"Часов лабораторных работ: {hours_of_laboratory_work}")
+
+            # Количество часов консультаций
+            hours_of_consultations = educational_work_data[f'H{row}'].value
+            if hours_of_consultations is None:
+                hours_of_consultations = 0
+            Rich.debug_log(f"Часов консультаций: {hours_of_consultations}")
+
+            # Часов экзаменов
+            hours_of_exams = educational_work_data[f'I{row}'].value
+            if hours_of_exams is None:
+                hours_of_exams = 0
+            Rich.debug_log(f"Часов экзаменов: {hours_of_exams}")
+
+            # Часов зачётов
+            hours_of_credits = educational_work_data[f'J{row}'].value
+            if hours_of_credits is None:
+                hours_of_credits = 0
+            Rich.debug_log(f"Часов зачётов: {hours_of_credits}")
+
+            # Часов курсовых работ, курсовых проектов
+            hours_of_terms_works = educational_work_data[f'K{row}'].value
+            if hours_of_terms_works is None:
+                hours_of_terms_works = 0
+            Rich.debug_log(f"Часов курсовых работ, курсовых проектов: {hours_of_terms_works}")
+
+            # Часов практики
+            hours_of_practice = educational_work_data[f'L{row}'].value
+            if hours_of_practice is None:
+                hours_of_practice = 0
+            Rich.debug_log(f"Часов практики: {hours_of_practice}")
+
+            # Часов ВКП
+            hours_WRC = educational_work_data[f'M{row}'].value
+            if hours_WRC is None:
+                hours_WRC = 0
+            Rich.debug_log(f"Часов ВКР: {hours_WRC}")
+
+            # Часов ГЭК
+            hours_of_GEC = educational_work_data[f'N{row}'].value
+            if hours_of_GEC is None:
+                hours_of_GEC = 0
+            Rich.debug_log(f"Часов ГЭК: {hours_of_GEC}")
+
+            # Часов дополнительных работ
+            hours_of_additional_works = educational_work_data[f'O{row}'].value
+            if hours_of_additional_works is None:
+                hours_of_additional_works = 0
+            Rich.debug_log(f"Часов дополнительных работ: {hours_of_additional_works}")
+
+            # Всего часов по плану
+            hours_of_total_according_to_plan = educational_work_data[f'P{row}'].value
+            if hours_of_total_according_to_plan is None:
+                hours_of_total_according_to_plan = 0
+            Rich.debug_log(f"Всего часов по плану: {hours_of_total_according_to_plan}")
+
+            # Всего часов фактически
+            hours_of_total_actually = educational_work_data[f'Q{row}'].value
+            if hours_of_total_actually is None:
+                hours_of_total_actually = 0
+            Rich.debug_log(f"Всего часов фактически: {hours_of_total_actually}")
+
+            data_of_disciplines_in_semester = InformationOnDisciplineOfAcademicWork(
+                name_of_discipline = subject_name,
+                group = current_group,
+                number_of_semester = educational_semester,
+                lectures = hours_of_lectures,
+                practical_training = hours_of_practice_lessons,
+                laboratory_work = hours_of_laboratory_work,
+                consultations = hours_of_consultations,
+                exams = hours_of_exams,
+                credits = hours_of_credits,
+                term_papers_and_works = hours_of_terms_works,
+                practice = hours_of_practice,
+                WRC = hours_WRC,
+                GEK = hours_of_GEC,
+                additional_work = hours_of_additional_works,
+                total_according_plan = hours_of_total_according_to_plan,
+                total_actually = hours_of_total_actually
+            )
+
+            list_of_disciplines_in_semester.append(data_of_disciplines_in_semester)
+
+        total_hours_of_lectures = -1.0
+        total_hours_of_practice_lessons = -1.0
+        total_hours_of_laboratory_work = -1.0
+        total_hours_of_consultations = -1.0
+        total_hours_of_exams = -1.0
+        total_hours_of_credits = -1.0
+        total_hours_of_terms_works = -1.0
+        total_hours_of_practice = -1.0
+        total_hours_WRC = -1.0
+        total_hours_of_GEC = -1.0
+        total_hours_of_additional_works = -1.0
+        total_hours_of_total_according_to_plan = -1.0
+        total_hours_of_total_actually = -1.0
+
+        summary_data_of_hours_in_semester = TeachersSummaryInfoOnHoursOfWorkPerSemester(
+            summary_lectures = total_hours_of_lectures,
+            summary_practical_training = total_hours_of_practice_lessons,
+            summary_laboratory_work = total_hours_of_laboratory_work,
+            summary_consultations = total_hours_of_consultations,
+            summary_exams = total_hours_of_exams,
+            summary_credits = total_hours_of_credits,
+            summary_term_papers_and_works = total_hours_of_terms_works,
+            summary_practice = total_hours_of_practice,
+            summary_WRC = total_hours_WRC,
+            summary_GEK = total_hours_of_GEC,
+            summary_additional_work = total_hours_of_additional_works,
+            summary_total_according_plan = total_hours_of_total_according_to_plan,
+            summary_total_actually = total_hours_of_total_actually
+        )
+
+        if (not educational_work_data[f'A{row}'].value is None
+                and "Итого за семестр" in educational_work_data[f'A{row}'].value):
+            # Количество часов лекций - итог
+            total_hours_of_lectures = educational_work_data[f'E{row}'].value
+            if total_hours_of_lectures is None:
+                total_hours_of_lectures = 0
+            Rich.debug_log(f"Итоговое количество часов "
+                           f"лекций: {total_hours_of_lectures}")
+
+            # Количество часов практик - итог
+            total_hours_of_practice_lessons = educational_work_data[f'F{row}'].value
+            if total_hours_of_practice_lessons is None:
+                total_hours_of_practice_lessons = 0
+            Rich.debug_log(f"Итоговое количество часов "
+                           f"практики: {total_hours_of_practice_lessons}")
+
+            # Количество часов лабораторных работ - итог
+            total_hours_of_laboratory_work = educational_work_data[f'G{row}'].value
+            if total_hours_of_laboratory_work is None:
+                total_hours_of_laboratory_work = 0
+            Rich.debug_log(f"Итоговое количество часов "
+                           f"лабораторных работ: {total_hours_of_laboratory_work}")
+
+            # Количество часов консультаций - итог
+            total_hours_of_consultations = educational_work_data[f'H{row}'].value
+            if total_hours_of_consultations is None:
+                total_hours_of_consultations = 0
+            Rich.debug_log(f"Итоговое количество часов "
+                           f"консультаций: {total_hours_of_consultations}")
+
+            # Часов экзаменов - итог
+            total_hours_of_exams = educational_work_data[f'I{row}'].value
+            if total_hours_of_exams is None:
+                total_hours_of_exams = 0
+            Rich.debug_log(f"Итоговое количество часов "
+                           f"экзаменов: {total_hours_of_exams}")
+
+            # Часов зачётов - итог
+            total_hours_of_credits = educational_work_data[f'J{row}'].value
+            if total_hours_of_credits is None:
+                total_hours_of_credits = 0
+            Rich.debug_log(f"Итоговое количество часов "
+                           f"зачётов: {total_hours_of_credits}")
+
+            # Часов курсовых работ, курсовых проектов - итог
+            total_hours_of_terms_works = educational_work_data[f'K{row}'].value
+            if total_hours_of_terms_works is None:
+                total_hours_of_terms_works = 0
+            Rich.debug_log(f"Итоговое количество часов курсовых работ, курсовых "
+                           f"проектов: {total_hours_of_terms_works}")
+
+            # Часов практики - итог
+            total_hours_of_practice = educational_work_data[f'L{row}'].value
+            if total_hours_of_practice is None:
+                total_hours_of_practice = 0
+            Rich.debug_log(f"Итоговое количество часов практики: {total_hours_of_practice}")
+
+            # Часов ВКП - итог
+            total_hours_WRC = educational_work_data[f'M{row}'].value
+            if total_hours_WRC is None:
+                total_hours_WRC = 0
+            Rich.debug_log(f"Итоговое количество часов ВКР: {total_hours_WRC}")
+
+            # Часов ГЭК - итог
+            total_hours_of_GEC = educational_work_data[f'N{row}'].value
+            if total_hours_of_GEC is None:
+                total_hours_of_GEC = 0
+            Rich.debug_log(f"Итоговое количество часов ГЭК: {total_hours_of_GEC}")
+
+            # Часов дополнительных работ - итог
+            total_hours_of_additional_works = educational_work_data[f'O{row}'].value
+            if total_hours_of_additional_works is None:
+                total_hours_of_additional_works = 0
+            Rich.debug_log(f"Итоговое количество часов "
+                           f"дополнительных работ: {total_hours_of_additional_works}")
+
+            # Всего часов по плану - итог
+            total_hours_of_total_according_to_plan = educational_work_data[f'P{row}'].value
+            if total_hours_of_total_according_to_plan is None:
+                total_hours_of_total_according_to_plan = 0
+            Rich.debug_log(f"Итоговое количество часов "
+                           f"по плану: {total_hours_of_total_according_to_plan}")
+
+            # Всего часов фактически - итог
+            total_hours_of_total_actually = educational_work_data[f'Q{row}'].value
+            if total_hours_of_total_actually is None:
+                total_hours_of_total_actually = 0
+            Rich.debug_log(f"Итоговое количество "
+                           f"часов фактически: {total_hours_of_total_actually}")
+
+            data_of_summary_hours_of_disciplines_in_semester = TeachersSummaryInfoOnHoursOfWorkPerSemester(
+                summary_lectures = total_hours_of_lectures,
+                summary_practical_training = total_hours_of_practice_lessons,
+                summary_laboratory_work = total_hours_of_laboratory_work,
+                summary_consultations = total_hours_of_consultations,
+                summary_exams = total_hours_of_exams,
+                summary_credits = total_hours_of_credits,
+                summary_term_papers_and_works = total_hours_of_terms_works,
+                summary_practice = total_hours_of_practice,
+                summary_WRC = total_hours_WRC,
+                summary_GEK = total_hours_of_GEC,
+                summary_additional_work = total_hours_of_additional_works,
+                summary_total_according_plan = total_hours_of_total_according_to_plan,
+                summary_total_actually = total_hours_of_total_actually
+            )
+            summary_data_of_hours_in_semester = data_of_summary_hours_of_disciplines_in_semester
+
+            data_of_semester = TeacherAcademicWorkPerSemester (
+                semester = current_semester,
+                disciplines = list_of_disciplines_in_semester,
+                summary_data_of_hours = summary_data_of_hours_in_semester
+            )
+
+            list_with_semesters_data.append(data_of_semester)
+            Rich.debug_log(f"Записана информация о {current_semester}")
