@@ -9,7 +9,9 @@ from core.models import (
     TeacherSummaryInfo,
     InformationOnDisciplineOfAcademicWork,
     TeachersSummaryInfoOnHoursOfWorkPerSemester,
-    TeacherAcademicWorkPerSemester)
+    TeacherAcademicWorkPerSemester,
+    FullInfoOnEducationWorkOfTeacher,
+    SummaryInfoOnHoursOfTeachersAcademicWork)
 from utils.output_rich import Rich
 from utils.utils_funcs import get_path_resources_file
 
@@ -18,6 +20,8 @@ from utils.utils_funcs import get_path_resources_file
 ITP_TEACHERS_GENERAL_DATA: List[TeacherGeneralInfo] = []
 # Список с объектами датаклассов со сводными данными по видам работ преподавателя
 ITP_TEACHERS_SUMMARY_DATA: List[TeacherSummaryInfo] = []
+# Список с полной информацией по учебной работе преподавателя из ИПП
+ITP_TEACHERS_EDUCATIONAL_DATA: List[FullInfoOnEducationWorkOfTeacher] = []
 
 
 def load_table(table_path: str) -> Workbook | None:
@@ -230,26 +234,11 @@ def parse_educational_work_sheet(file_path: str) -> None:
     Rich.simple_log(" ".join((educational_work_data['A1'].value).split()))
 
     current_semester = ""
-    subject_name = ""
     current_group = ""
-    educational_semester = -1
-    hours_of_lectures = -1.0
-    hours_of_practice_lessons = -1.0
-    hours_of_laboratory_work = -1.0
-    hours_of_consultations = -1.0
-    hours_of_exams = -1.0
-    hours_of_credits = -1.0
-    hours_of_terms_works = -1.0
-    hours_of_practice = -1.0
-    hours_WRC = -1.0
-    hours_of_GEC = -1.0
-    hours_of_additional_works = -1.0
-    hours_of_total_according_to_plan = -1.0
-    hours_of_total_actually = -1.0
 
     list_of_disciplines_in_semester: List[InformationOnDisciplineOfAcademicWork] = []
 
-    for row in range(5, educational_work_data.max_row - 4):
+    for row in range(5, educational_work_data.max_row - 2):
         # парсинг данных
 
         # парсинг по дисциплинам
@@ -262,6 +251,9 @@ def parse_educational_work_sheet(file_path: str) -> None:
                     and not ("Фактически выполнено за семестр"
                              in educational_work_data[f"A{row}"].value)):
                 current_semester = educational_work_data[f"A{row}"].value
+                current_semester = " ".join(current_semester.split())
+                # срезаем ведущий маркер: буква (рус/лат) + закрывающая скобка + пробелы
+                current_semester = re.sub(r"^[а-яёa-z]\s*\)\s*", "", current_semester, flags=re.IGNORECASE)
                 Rich.simple_log(f"Семестр: {current_semester}")
 
         if (not educational_work_data[f'A{row}'].value is None
@@ -380,38 +372,40 @@ def parse_educational_work_sheet(file_path: str) -> None:
 
             list_of_disciplines_in_semester.append(data_of_disciplines_in_semester)
 
-        total_hours_of_lectures = -1.0
-        total_hours_of_practice_lessons = -1.0
-        total_hours_of_laboratory_work = -1.0
-        total_hours_of_consultations = -1.0
-        total_hours_of_exams = -1.0
-        total_hours_of_credits = -1.0
-        total_hours_of_terms_works = -1.0
-        total_hours_of_practice = -1.0
-        total_hours_WRC = -1.0
-        total_hours_of_GEC = -1.0
-        total_hours_of_additional_works = -1.0
-        total_hours_of_total_according_to_plan = -1.0
-        total_hours_of_total_actually = -1.0
+        # total_hours_of_lectures = -1.0
+        # total_hours_of_practice_lessons = -1.0
+        # total_hours_of_laboratory_work = -1.0
+        # total_hours_of_consultations = -1.0
+        # total_hours_of_exams = -1.0
+        # total_hours_of_credits = -1.0
+        # total_hours_of_terms_works = -1.0
+        # total_hours_of_practice = -1.0
+        # total_hours_WRC = -1.0
+        # total_hours_of_GEC = -1.0
+        # total_hours_of_additional_works = -1.0
+        # total_hours_of_total_according_to_plan = -1.0
+        # total_hours_of_total_actually = -1.0
 
-        summary_data_of_hours_in_semester = TeachersSummaryInfoOnHoursOfWorkPerSemester(
-            summary_lectures = total_hours_of_lectures,
-            summary_practical_training = total_hours_of_practice_lessons,
-            summary_laboratory_work = total_hours_of_laboratory_work,
-            summary_consultations = total_hours_of_consultations,
-            summary_exams = total_hours_of_exams,
-            summary_credits = total_hours_of_credits,
-            summary_term_papers_and_works = total_hours_of_terms_works,
-            summary_practice = total_hours_of_practice,
-            summary_WRC = total_hours_WRC,
-            summary_GEK = total_hours_of_GEC,
-            summary_additional_work = total_hours_of_additional_works,
-            summary_total_according_plan = total_hours_of_total_according_to_plan,
-            summary_total_actually = total_hours_of_total_actually
-        )
+        # summary_data_of_hours_in_semester = TeachersSummaryInfoOnHoursOfWorkPerSemester(
+        #     summary_lectures = total_hours_of_lectures,
+        #     summary_practical_training = total_hours_of_practice_lessons,
+        #     summary_laboratory_work = total_hours_of_laboratory_work,
+        #     summary_consultations = total_hours_of_consultations,
+        #     summary_exams = total_hours_of_exams,
+        #     summary_credits = total_hours_of_credits,
+        #     summary_term_papers_and_works = total_hours_of_terms_works,
+        #     summary_practice = total_hours_of_practice,
+        #     summary_WRC = total_hours_WRC,
+        #     summary_GEK = total_hours_of_GEC,
+        #     summary_additional_work = total_hours_of_additional_works,
+        #     summary_total_according_plan = total_hours_of_total_according_to_plan,
+        #     summary_total_actually = total_hours_of_total_actually
+        # )
 
+        # Получение итоговой информации по часам
         if (not educational_work_data[f'A{row}'].value is None
                 and "Итого за семестр" in educational_work_data[f'A{row}'].value):
+
             # Количество часов лекций - итог
             total_hours_of_lectures = educational_work_data[f'E{row}'].value
             if total_hours_of_lectures is None:
@@ -520,8 +514,134 @@ def parse_educational_work_sheet(file_path: str) -> None:
             data_of_semester = TeacherAcademicWorkPerSemester (
                 semester = current_semester,
                 disciplines = list_of_disciplines_in_semester,
-                summary_data_of_hours = summary_data_of_hours_in_semester
+                summary_data_of_hours_by_semester = summary_data_of_hours_in_semester
             )
 
             list_with_semesters_data.append(data_of_semester)
-            Rich.debug_log(f"Записана информация о {current_semester}")
+            Rich.simple_log(f"Записана информация о {current_semester}")
+
+    num_row_total_info_hours_educational_work_for_year = educational_work_data.max_row - 1
+
+    # Количество часов лекций - итог за год
+    total_hours_of_lectures_by_year = educational_work_data[f'E{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_lectures_by_year is None:
+        total_hours_of_lectures_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов "
+                   f"лекций за год: {total_hours_of_lectures_by_year}")
+
+    # Количество часов практик - итог за год
+    total_hours_of_practice_lessons_by_year = educational_work_data[f'F{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_practice_lessons_by_year is None:
+        total_hours_of_practice_lessons_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов "
+                   f"практики за год: {total_hours_of_practice_lessons_by_year}")
+
+    # Количество часов лабораторных работ - итог за год
+    total_hours_of_laboratory_work_by_year = educational_work_data[f'G{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_laboratory_work_by_year is None:
+        total_hours_of_laboratory_work_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов "
+                   f"лабораторных работ за год: {total_hours_of_laboratory_work_by_year}")
+
+    # Количество часов консультаций - итог за год
+    total_hours_of_consultations_by_year = educational_work_data[f'H{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_consultations_by_year is None:
+        total_hours_of_consultations_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов "
+                   f"консультаций за год: {total_hours_of_consultations_by_year}")
+
+    # Часов экзаменов - итог за год
+    total_hours_of_exams_by_year = educational_work_data[f'I{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_exams_by_year is None:
+        total_hours_of_exams_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов "
+                   f"экзаменов за год: {total_hours_of_exams_by_year}")
+
+    # Часов зачётов - итог за год
+    total_hours_of_credits_by_year = educational_work_data[f'J{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_credits_by_year is None:
+        total_hours_of_credits_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов "
+                   f"зачётов за год: {total_hours_of_credits_by_year}")
+
+    # Часов курсовых работ, курсовых проектов - итог за год
+    total_hours_of_terms_works_by_year = educational_work_data[f'K{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_terms_works_by_year is None:
+        total_hours_of_terms_works_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов курсовых работ, курсовых "
+                   f"проектов за год: {total_hours_of_terms_works_by_year}")
+
+    # Часов практики - итог за год
+    total_hours_of_practice_by_year = educational_work_data[f'L{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_practice_by_year is None:
+        total_hours_of_practice_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов практики за год: {total_hours_of_practice_by_year}")
+
+    # Часов ВКП - итог за год
+    total_hours_WRC_by_year = educational_work_data[f'M{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_WRC_by_year is None:
+        total_hours_WRC_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов ВКР за год: {total_hours_WRC_by_year}")
+
+    # Часов ГЭК - итог за год
+    total_hours_of_GEC_by_year = educational_work_data[f'N{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_GEC_by_year is None:
+        total_hours_of_GEC_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов ГЭК за год: {total_hours_of_GEC_by_year}")
+
+    # Часов дополнительных работ - итог за год
+    total_hours_of_additional_works_by_year = educational_work_data[f'O{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_additional_works_by_year is None:
+        total_hours_of_additional_works_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов "
+                   f"дополнительных работ за год: {total_hours_of_additional_works_by_year}")
+
+    # Всего часов по плану - итог за год
+    total_hours_of_total_according_to_plan_by_year = educational_work_data[f'P{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_total_according_to_plan_by_year is None:
+        total_hours_of_total_according_to_plan_by_year = 0
+    Rich.debug_log(f"Итоговое количество часов "
+                   f"по плану за год: {total_hours_of_total_according_to_plan_by_year}")
+
+    # Всего часов фактически - итог за год
+    total_hours_of_total_actually_by_year = educational_work_data[f'Q{num_row_total_info_hours_educational_work_for_year}'].value
+    if total_hours_of_total_actually_by_year is None:
+        total_hours_of_total_actually_by_year = 0
+    Rich.debug_log(f"Итоговое количество "
+                   f"часов фактически за год: {total_hours_of_total_actually_by_year}")
+
+    summary_data_of_hours_teachers_educational_work_by_year = SummaryInfoOnHoursOfTeachersAcademicWork(
+        summary_lectures_per_year = total_hours_of_lectures_by_year,
+        summary_practical_training_per_year = total_hours_of_practice_lessons_by_year,
+        summary_laboratory_work_per_year = total_hours_of_laboratory_work_by_year,
+        summary_consultations_per_year = total_hours_of_consultations_by_year,
+        summary_exams_per_year = total_hours_of_exams_by_year,
+        summary_credits_per_year = total_hours_of_credits_by_year,
+        summary_term_papers_and_works_per_year = total_hours_of_terms_works_by_year,
+        summary_practice_per_year = total_hours_of_practice_by_year,
+        summary_WRC_per_year = total_hours_WRC_by_year,
+        summary_GEK_per_year = total_hours_of_GEC_by_year,
+        summary_additional_work_per_year = total_hours_of_additional_works_by_year,
+        summary_total_according_plan_per_year = total_hours_of_total_according_to_plan_by_year,
+        summary_total_actually = total_hours_of_total_actually_by_year
+    )
+
+    autumn_semester = -1
+    spring_semester = -1
+
+    if len(list_with_semesters_data) == 2:
+        autumn_semester = list_with_semesters_data[0]
+        spring_semester = list_with_semesters_data[1]
+        Rich.success_log("Информация по семестрам получена")
+    else:
+        Rich.warning_log("Не удалось получить информацию по семестрам")
+
+    teachers_educational_work = FullInfoOnEducationWorkOfTeacher(
+        autumn_semester = autumn_semester,
+        spring_semester = spring_semester,
+        summary_info_about_educational_work_by_year = summary_data_of_hours_teachers_educational_work_by_year
+    )
+
+    ITP_TEACHERS_EDUCATIONAL_DATA.append(teachers_educational_work)
+    Rich.success_log("Добавлена информация о учебной работе преподавателя")
+    list_with_semesters_data.clear()
