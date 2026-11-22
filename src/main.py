@@ -10,7 +10,7 @@ from parser.itp_parser import (
     parse_summary_data_sheet,
     ITP_TEACHERS_SUMMARY_DATA,
     parse_educational_work_sheet,
-    list_with_semesters_data)
+    ITP_TEACHERS_EDUCATIONAL_DATA)
 
 
 def main():
@@ -39,7 +39,7 @@ def main():
     # save_itp_summary_data(ITP_TEACHERS_SUMMARY_DATA)
 
     parse_educational_work_sheet("tables/itp/individ_plrpr2023 Волков.xlsx")
-    save_itp_educational_work_data(list_with_semesters_data)
+    save_itp_educational_work_data(ITP_TEACHERS_EDUCATIONAL_DATA)
 
 
 if __name__ == "__main__":
