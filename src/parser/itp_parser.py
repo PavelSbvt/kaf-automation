@@ -1,3 +1,4 @@
+from datetime import date
 import re
 from typing import List
 
@@ -11,7 +12,10 @@ from core.models import (
     TeachersSummaryInfoOnHoursOfWorkPerSemester,
     TeacherAcademicWorkPerSemester,
     FullInfoOnEducationWorkOfTeacher,
-    SummaryInfoOnHoursOfTeachersAcademicWork)
+    SummaryInfoOnHoursOfTeachersAcademicWork,
+    RowData,
+    TeacherEducationalAndMethodicalWorkData,
+    TeacherScientificAndResearchInfo)
 from utils.output_rich import Rich
 from utils.utils_funcs import get_path_resources_file
 
@@ -22,6 +26,11 @@ ITP_TEACHERS_GENERAL_DATA: List[TeacherGeneralInfo] = []
 ITP_TEACHERS_SUMMARY_DATA: List[TeacherSummaryInfo] = []
 # Список с полной информацией по учебной работе преподавателя из ИПП
 ITP_TEACHERS_EDUCATIONAL_DATA: List[FullInfoOnEducationWorkOfTeacher] = []
+# Список с объектами датаклассов с информацией по учебно-методической
+# работе преподавателя из ИПП
+ITP_TEACHERS_EDUCATIONAL_AND_METHODICAL_DATA: List[TeacherEducationalAndMethodicalWorkData] = []
+# Список для хранения информации о научно-исследовательской деятельности преподавателя
+ITP_TEACHERS_SCIENTIFIC_AND_RESEARCH_DATA: List[TeacherScientificAndResearchInfo] = []
 
 
 def load_table(table_path: str) -> Workbook | None:
@@ -645,3 +654,126 @@ def parse_educational_work_sheet(file_path: str) -> None:
     ITP_TEACHERS_EDUCATIONAL_DATA.append(teachers_educational_work)
     Rich.success_log("Добавлена информация о учебной работе преподавателя")
     list_with_semesters_data.clear()
+
+
+def parse_educational_and_methodical_work_sheet(file_path: str) -> None:
+    """
+    Функция для парсинга листа 1.2 таблицы ИПП. Парсит лист с учебно-методической работой
+    :param file_path: путь к файлу таблицы ИПП
+    :return: None
+    """
+    individual_plan = load_table(get_path_resources_file(file_path))
+    # Открываю лист с учебной работой - лист 1.2.
+    educational_and_methodical_data = individual_plan["1.2."]
+    Rich.print_spacer()
+    # Вывод шапки листа
+    Rich.simple_log(" ".join((educational_and_methodical_data['B1'].value).split()))
+
+    # Начало парсинга данных
+
+    # Общий объём планируемой учебно-методической работы за учебный год, часов
+    total_amount_of_planned_educational_and_methodological_work_for_academic_year = (
+        float(educational_and_methodical_data['E3'].value)
+    )
+    Rich.debug_log(f"Общий объём планируемой учебно-методической работы за учебный год, часов: {
+        total_amount_of_planned_educational_and_methodological_work_for_academic_year
+    }")
+
+    list_of_types_of_jobs: List[RowData] = []
+
+    for row in range(7, educational_and_methodical_data.max_row - 1):
+        if not educational_and_methodical_data[f'B{row}'].value is None:
+            # Наименование вида работы
+            name_of_work = educational_and_methodical_data[f'B{row}'].value
+            Rich.debug_log(f"Вид работы: {name_of_work}")
+
+            # Трудоёмкость, часов
+            number_of_hours = float(educational_and_methodical_data[f'C{row}'].value)
+            Rich.debug_log(f"Трудоёмкость, часов: {number_of_hours}")
+
+            # Срок выполнения (месяц, год)
+            period_of_execution = educational_and_methodical_data[f'D{row}'].value.date().strftime("%d.%m.%Y")
+            Rich.debug_log(f"Срок выполнения (месяц, год): {period_of_execution}")
+
+            # Отметка о выполнении
+            mark_of_completion = educational_and_methodical_data[f'E{row}'].value
+            Rich.debug_log(f"Отметка о выполнении: {mark_of_completion}")
+
+            row_data = RowData(
+                work_name = name_of_work,
+                number_of_hours_for_work = number_of_hours,
+                period_of_execution_for_work = period_of_execution
+            )
+
+            list_of_types_of_jobs.append(row_data)
+
+    education_and_methodical_info = TeacherEducationalAndMethodicalWorkData(
+        total_hours = total_amount_of_planned_educational_and_methodological_work_for_academic_year,
+        list_of_data_with_jobs = list_of_types_of_jobs
+    )
+
+    Rich.debug_log("Получена информация о учебно-методической работе преподавателя")
+    Rich.debug_log(f"Всего работ: {len(list_of_types_of_jobs)}")
+    ITP_TEACHERS_EDUCATIONAL_AND_METHODICAL_DATA.append(education_and_methodical_info)
+
+
+def parse_scientific_research_activities_sheet(file_path: str) -> None:
+    """
+    Функция для парсинга листа 2 таблицы ИПП. Парсит лист с научно-исследовательской
+     деятельностью
+    :param file_path: путь к файлу таблицы ИПП
+    :return: None
+    """
+    individual_plan = load_table(get_path_resources_file(file_path))
+    # Открываю лист с учебной работой - лист 1.2.
+    scientific_and_research_data = individual_plan["2"]
+    Rich.print_spacer()
+    # Вывод шапки листа
+    Rich.simple_log(" ".join((scientific_and_research_data['A1'].value).split()))
+
+    # Начало парсинга данных
+
+    # Общий объём планируемой научно-исследовательской деятельности за учебный год
+    total_amount_of_planned_educational_and_methodological_work_for_academic_year = (
+        float(scientific_and_research_data['E3'].value)
+    )
+    Rich.debug_log(f"Общий объём планируемой учебно-методической работы за учебный год, часов: {
+        total_amount_of_planned_educational_and_methodological_work_for_academic_year
+    }")
+
+    list_of_types_of_jobs: List[RowData] = []
+
+    for row in range(7, scientific_and_research_data.max_row - 1):
+        if not scientific_and_research_data[f'B{row}'].value is None:
+            # Наименование вида работы
+            name_of_work = scientific_and_research_data[f'B{row}'].value
+            Rich.debug_log(f"Вид работы: {name_of_work}")
+
+            # Трудоёмкость, часов
+            number_of_hours = float(scientific_and_research_data[f'C{row}'].value)
+            Rich.debug_log(f"Трудоёмкость, часов: {number_of_hours}")
+
+            # Срок выполнения (месяц, год)
+            period_of_execution = scientific_and_research_data[f'D{row}'].value.date().strftime("%d.%m.%Y")
+            Rich.debug_log(f"Срок выполнения (месяц, год): {period_of_execution}")
+
+            # Отметка о выполнении
+            mark_of_completion = scientific_and_research_data[f'E{row}'].value
+            Rich.debug_log(f"Отметка о выполнении: {mark_of_completion}")
+
+            row_data = RowData(
+                work_name = name_of_work,
+                number_of_hours_for_work = number_of_hours,
+                period_of_execution_for_work = period_of_execution
+            )
+
+            list_of_types_of_jobs.append(row_data)
+
+    scientific_and_research_info = TeacherScientificAndResearchInfo(
+        total_hours = total_amount_of_planned_educational_and_methodological_work_for_academic_year,
+        list_of_data_with_jobs = list_of_types_of_jobs
+    )
+
+    Rich.debug_log("Получена информация о учебно-методической работе преподавателя")
+    Rich.debug_log(f"Всего работ: {len(list_of_types_of_jobs)}")
+    ITP_TEACHERS_SCIENTIFIC_AND_RESEARCH_DATA.append(scientific_and_research_info)
