@@ -236,3 +236,46 @@ class FullInfoOnEducationWorkOfTeacher:
 
     summary_info_about_educational_work_by_year: SummaryInfoOnHoursOfTeachersAcademicWork | None
     """Итоговая информация по часам учебной работы"""
+
+
+@dataclass
+class RowData:
+    """
+    Датакласс для хранения данных строки таблицы (наименование работы, трудоёмкость в
+     часах, срок выполнения) для листов таблицы ИПП
+    """
+    work_name: str
+    """Наименование вида работы"""
+
+    number_of_hours_for_work: float
+    """Трудоёмкость, часов"""
+
+    period_of_execution_for_work: str
+    """Срок выполнения (месяц, год)"""
+
+
+@dataclass
+class TeacherEducationalAndMethodicalWorkData:
+    """
+    Датакласс для хранения информации об учебно-методической работе преподавателя.
+    Хранит информацию с листа 1.2 таблицы ИПП
+    """
+    total_hours: float
+    """Общий объем планируемой учебно-методической работы за учебный год, часов"""
+
+    list_of_data_with_jobs: List[RowData]
+    """Список с видами работ, трудоёмкостью в часах и сроках выполнения"""
+
+
+@dataclass
+class TeacherScientificAndResearchInfo:
+    """
+    Датакласс для хранения информации о научно-исследовательской деятельности
+     преподавателя. Для хранения данных листа 2 таблицы ИПП
+    """
+    total_hours: float
+    """Общий объем планируемой научно-исследовательской деятельности за учебный год, 
+    часов"""
+
+    list_of_data_with_jobs: List[RowData]
+    """Список с видами работ, трудоёмкостью в часах и сроках выполнения"""
