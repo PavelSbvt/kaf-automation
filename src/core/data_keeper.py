@@ -6,7 +6,8 @@ from core.models import (
     TeacherGeneralInfo,
     DataNamesOfWorksFromSummaryInfo,
     TeacherSummaryInfo,
-    TeacherAcademicWorkPerSemester
+    TeacherAcademicWorkPerSemester,
+    FullInfoOnEducationWorkOfTeacher
 )
 from utils.output_rich import Rich
 
@@ -43,7 +44,7 @@ def save_itp_summary_data(teachers_data: List[TeacherSummaryInfo]):
     Rich.print_spacer()
 
 
-def save_itp_educational_work_data(teachers_educational_work_data: List[TeacherAcademicWorkPerSemester]) -> None:
+def save_itp_educational_work_data(teachers_educational_work_data: List[FullInfoOnEducationWorkOfTeacher]) -> None:
     """
     Функция для теста сохранения данных по учебной работе преподавателя за семестр
     :param teachers_educational_work_data: массив с массивами с датаклассами по учебной работе преподавателя из таблицы ИПП - пока тест
