@@ -119,7 +119,6 @@ class TeachersSummaryInfoOnHoursOfWorkPerSemester:
     Датакласс для хранения информации по итоговому количеству часов по
      учебной работе преподавателя в семестре их листа 1.1. таблицы ИПП
     """
-
     summary_lectures: float
     """Лекции - итоговое количество часов за семестр"""
 
@@ -167,13 +166,73 @@ class TeacherAcademicWorkPerSemester:
     (осеннему или весеннему).
     Данные из листа "1.1. " ИПП.
     """
-
     semester: str
     """Семестр"""
 
     disciplines: List[InformationOnDisciplineOfAcademicWork]
     """Список дисциплин с информацией по каждой"""
 
-    summary_data_of_hours: TeachersSummaryInfoOnHoursOfWorkPerSemester
+    summary_data_of_hours_by_semester: TeachersSummaryInfoOnHoursOfWorkPerSemester
     """Список с итоговой информацией по часам работы преподавателя в семестре"""
 
+
+@dataclass
+class SummaryInfoOnHoursOfTeachersAcademicWork:
+    """
+    Итоговая информация по часам работы учебной работы преподавателя за год.
+    Берётся из листа 1.1 таблицы ИПП
+    """
+    summary_lectures_per_year: float
+    """Лекции - итоговое количество часов за год"""
+
+    summary_practical_training_per_year: float
+    """Практические занятия - итоговое количество часов за год"""
+
+    summary_laboratory_work_per_year: float
+    """Лабораторные работы - итоговое количество часов за год"""
+
+    summary_consultations_per_year: float
+    """Консультации - итоговое количество часов за год"""
+
+    summary_exams_per_year: float
+    """Экзамены - итоговое количество часов за год"""
+
+    summary_credits_per_year: float
+    """Зачёты - итоговое количество часов за год"""
+
+    summary_term_papers_and_works_per_year: float
+    """Курсовые работы, курсовые проекты - итоговое количество часов за год"""
+
+    summary_practice_per_year: float
+    """Практика - итоговое количество часов за год"""
+
+    summary_WRC_per_year: float
+    """ВКР - итоговое количество часов за год"""
+
+    summary_GEK_per_year: float
+    """ГЭК - итоговое количество часов за год"""
+
+    summary_additional_work_per_year: float
+    """Дополнительные работы - итоговое количество часов за год"""
+
+    summary_total_according_plan_per_year: float
+    """Всего по плану - итоговое количество часов за год"""
+
+    summary_total_actually: float
+    """Фактически выполнено за семестр - итоговое количество часов за год"""
+
+
+@ dataclass
+class FullInfoOnEducationWorkOfTeacher:
+    """
+    Датакласс для хранения полной информации по учебному плану преподавателя.
+    Данные из листа 1.1 таблицы ИПП.
+    """
+    autumn_semester: TeacherAcademicWorkPerSemester
+    """Информация по осеннему семестру"""
+
+    spring_semester: TeacherAcademicWorkPerSemester
+    """Информация по весеннему семестру"""
+
+    summary_info_about_educational_work_by_year: SummaryInfoOnHoursOfTeachersAcademicWork | None
+    """Итоговая информация по часам учебной работы"""
