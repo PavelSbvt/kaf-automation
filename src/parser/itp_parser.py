@@ -56,6 +56,15 @@ class ParserITP:
     """
 
     @staticmethod
+    def rounding(number: float) -> float:
+        """
+        Метод для округления числа до десятых
+        :param number: принимает вещественное число
+        :return: возвращает округлённое вещественное число
+        """
+        return round(float(number), 1)
+
+    @staticmethod
     def load_table(table_path: str) -> Workbook | None:
         """
         Функция для безопасной загрузки таблицы с исключением
@@ -190,7 +199,7 @@ class ParserITP:
             Rich.debug_log("Учёное звание: нет")
             teacher_academic_title = None
         else:
-            Rich.debug_log(f"Учёное звание: {teacher_academic_degree}")
+            Rich.debug_log(f"Учёное звание: {teacher_academic_title}")
 
         Rich.print_spacer_points()
         Rich.debug_log("Сведения о контракте")
@@ -231,30 +240,18 @@ class ParserITP:
             Rich.debug_log(f"   {subject}")
 
         parsed_data = TeacherGeneralInfo(
-            # ФИО
             name = teacher_name,
-            # Должность
             post = teacher_post,
-            # Размер ставки
             amount_of_bet = teacher_amount_of_bet,
-            # Условия привлечения
             terms_of_attraction = teacher_terms_of_attraction,
-            # Учёная степень
             academic_degree = teacher_academic_degree,
-            # Учёное звание
             academic_title = teacher_academic_title,
             # Сведения о контракте
-            # Дата, номер
             date_and_number = teacher_data_and_number,
-            # Срок действия
             validity_period = teacher_validity_period,
-            # Базовое образование
             basic_education = teacher_basic_education,
-            # Наименование образовательной программы
             name_educational_program = teacher_name_educational_program,
-            # Квалификация
             qualification = teacher_qualification,
-            # Перечень преподаваемых дисциплин
             list_subjects_taught = teacher_list_subjects_taught
         )
 
@@ -286,8 +283,6 @@ class ParserITP:
         # список с информацией о работах преподавателя
         teacher_jobs_info: List[DataNamesOfWorksFromSummaryInfo] = []
 
-        teachers_total_number_of_hours = -1
-
         for iter in range(5, summary_data.max_row):
             iter_cell_with_type_of_work =  summary_data[f'A{iter}'].value
             iter_cell_with_type_of_work = " ".join(iter_cell_with_type_of_work.split())
@@ -302,7 +297,8 @@ class ParserITP:
                 if "в том числе:" in iter_cell_with_type_of_work:
                     continue
                 if "Всего:" in iter_cell_with_type_of_work:
-                    teachers_total_number_of_hours = round(float(iter_cell_with_number_of_hours), 1)
+                    teachers_total_number_of_hours = ParserITP.rounding(
+                        iter_cell_with_number_of_hours)
                     break
                 else:
                     row_data = DataNamesOfWorksFromSummaryInfo(
@@ -365,8 +361,11 @@ class ParserITP:
                                  in educational_work_data[f"A{row}"].value)):
                     current_semester = educational_work_data[f"A{row}"].value
                     current_semester = " ".join(current_semester.split())
-                    # срезаем ведущий маркер: буква (рус/лат) + закрывающая скобка + пробелы
-                    current_semester = re.sub(r"^[а-яёa-z]\s*\)\s*", "", current_semester, flags=re.IGNORECASE)
+                    current_semester = re.sub(
+                        r"^[а-яёa-z]\s*\)\s*",
+                        "",
+                        current_semester,
+                        flags=re.IGNORECASE)
                     Rich.simple_log(f"Семестр: {current_semester}")
 
             if (not educational_work_data[f'A{row}'].value is None
@@ -390,78 +389,91 @@ class ParserITP:
                 hours_of_lectures = educational_work_data[f'E{row}'].value
                 if hours_of_lectures is None:
                     hours_of_lectures = 0
+                hours_of_lectures = ParserITP.rounding(hours_of_lectures)
                 Rich.debug_log(f"Часов лекций: {hours_of_lectures}")
 
                 # Количество часов практики
                 hours_of_practice_lessons = educational_work_data[f'F{row}'].value
                 if  hours_of_practice_lessons is None:
                     hours_of_practice_lessons = 0
+                hours_of_practice_lessons = ParserITP.rounding(hours_of_practice_lessons)
                 Rich.debug_log(f"Часов практики: {hours_of_practice_lessons}")
 
                 # Количество часов лабораторных работ
                 hours_of_laboratory_work = educational_work_data[f'G{row}'].value
                 if hours_of_laboratory_work is None:
                     hours_of_laboratory_work = 0
+                hours_of_laboratory_work = ParserITP.rounding(hours_of_laboratory_work)
                 Rich.debug_log(f"Часов лабораторных работ: {hours_of_laboratory_work}")
 
                 # Количество часов консультаций
                 hours_of_consultations = educational_work_data[f'H{row}'].value
                 if hours_of_consultations is None:
                     hours_of_consultations = 0
+                hours_of_consultations = round(float(hours_of_consultations),1)
                 Rich.debug_log(f"Часов консультаций: {hours_of_consultations}")
 
                 # Часов экзаменов
                 hours_of_exams = educational_work_data[f'I{row}'].value
                 if hours_of_exams is None:
                     hours_of_exams = 0
+                hours_of_exams = round(float(hours_of_exams), 1)
                 Rich.debug_log(f"Часов экзаменов: {hours_of_exams}")
 
                 # Часов зачётов
                 hours_of_credits = educational_work_data[f'J{row}'].value
                 if hours_of_credits is None:
                     hours_of_credits = 0
+                hours_of_credits = ParserITP.rounding(hours_of_credits)
                 Rich.debug_log(f"Часов зачётов: {hours_of_credits}")
 
                 # Часов курсовых работ, курсовых проектов
                 hours_of_terms_works = educational_work_data[f'K{row}'].value
                 if hours_of_terms_works is None:
                     hours_of_terms_works = 0
+                hours_of_terms_works = ParserITP.rounding(hours_of_terms_works)
                 Rich.debug_log(f"Часов курсовых работ, курсовых проектов: {hours_of_terms_works}")
 
                 # Часов практики
                 hours_of_practice = educational_work_data[f'L{row}'].value
                 if hours_of_practice is None:
                     hours_of_practice = 0
+                hours_of_practice = ParserITP.rounding(hours_of_practice)
                 Rich.debug_log(f"Часов практики: {hours_of_practice}")
 
                 # Часов ВКП
                 hours_WRC = educational_work_data[f'M{row}'].value
                 if hours_WRC is None:
                     hours_WRC = 0
+                hours_WRC = ParserITP.rounding(hours_WRC)
                 Rich.debug_log(f"Часов ВКР: {hours_WRC}")
 
                 # Часов ГЭК
                 hours_of_GEC = educational_work_data[f'N{row}'].value
                 if hours_of_GEC is None:
                     hours_of_GEC = 0
+                hours_of_GEC = ParserITP.rounding(hours_of_GEC)
                 Rich.debug_log(f"Часов ГЭК: {hours_of_GEC}")
 
                 # Часов дополнительных работ
                 hours_of_additional_works = educational_work_data[f'O{row}'].value
                 if hours_of_additional_works is None:
                     hours_of_additional_works = 0
+                hours_of_additional_works = ParserITP.rounding(hours_of_additional_works)
                 Rich.debug_log(f"Часов дополнительных работ: {hours_of_additional_works}")
 
                 # Всего часов по плану
                 hours_of_total_according_to_plan = educational_work_data[f'P{row}'].value
                 if hours_of_total_according_to_plan is None:
                     hours_of_total_according_to_plan = 0
+                hours_of_total_according_to_plan = round(float(hours_of_total_according_to_plan),1)
                 Rich.debug_log(f"Всего часов по плану: {hours_of_total_according_to_plan}")
 
                 # Всего часов фактически
                 hours_of_total_actually = educational_work_data[f'Q{row}'].value
                 if hours_of_total_actually is None:
                     hours_of_total_actually = 0
+                hours_of_total_actually = ParserITP.rounding(hours_of_total_actually)
                 Rich.debug_log(f"Всего часов фактически: {hours_of_total_actually}")
 
                 data_of_disciplines_in_semester = InformationOnDisciplineOfAcademicWork(
@@ -493,6 +505,7 @@ class ParserITP:
                 total_hours_of_lectures = educational_work_data[f'E{row}'].value
                 if total_hours_of_lectures is None:
                     total_hours_of_lectures = 0
+                total_hours_of_lectures = ParserITP.rounding(total_hours_of_lectures)
                 Rich.debug_log(f"Итоговое количество часов "
                                f"лекций: {total_hours_of_lectures}")
 
@@ -500,6 +513,8 @@ class ParserITP:
                 total_hours_of_practice_lessons = educational_work_data[f'F{row}'].value
                 if total_hours_of_practice_lessons is None:
                     total_hours_of_practice_lessons = 0
+                total_hours_of_practice_lessons = ParserITP.rounding(
+                    total_hours_of_practice_lessons)
                 Rich.debug_log(f"Итоговое количество часов "
                                f"практики: {total_hours_of_practice_lessons}")
 
@@ -507,6 +522,8 @@ class ParserITP:
                 total_hours_of_laboratory_work = educational_work_data[f'G{row}'].value
                 if total_hours_of_laboratory_work is None:
                     total_hours_of_laboratory_work = 0
+                total_hours_of_laboratory_work = ParserITP.rounding(
+                    total_hours_of_laboratory_work)
                 Rich.debug_log(f"Итоговое количество часов "
                                f"лабораторных работ: {total_hours_of_laboratory_work}")
 
@@ -514,6 +531,8 @@ class ParserITP:
                 total_hours_of_consultations = educational_work_data[f'H{row}'].value
                 if total_hours_of_consultations is None:
                     total_hours_of_consultations = 0
+                total_hours_of_consultations = ParserITP.rounding(
+                    total_hours_of_consultations)
                 Rich.debug_log(f"Итоговое количество часов "
                                f"консультаций: {total_hours_of_consultations}")
 
@@ -521,6 +540,7 @@ class ParserITP:
                 total_hours_of_exams = educational_work_data[f'I{row}'].value
                 if total_hours_of_exams is None:
                     total_hours_of_exams = 0
+                total_hours_of_exams = ParserITP.rounding(total_hours_of_exams)
                 Rich.debug_log(f"Итоговое количество часов "
                                f"экзаменов: {total_hours_of_exams}")
 
@@ -528,6 +548,7 @@ class ParserITP:
                 total_hours_of_credits = educational_work_data[f'J{row}'].value
                 if total_hours_of_credits is None:
                     total_hours_of_credits = 0
+                total_hours_of_credits = ParserITP.rounding(total_hours_of_credits)
                 Rich.debug_log(f"Итоговое количество часов "
                                f"зачётов: {total_hours_of_credits}")
 
@@ -535,6 +556,8 @@ class ParserITP:
                 total_hours_of_terms_works = educational_work_data[f'K{row}'].value
                 if total_hours_of_terms_works is None:
                     total_hours_of_terms_works = 0
+                total_hours_of_terms_works = ParserITP.rounding(
+                    total_hours_of_terms_works)
                 Rich.debug_log(f"Итоговое количество часов курсовых работ, курсовых "
                                f"проектов: {total_hours_of_terms_works}")
 
@@ -542,31 +565,40 @@ class ParserITP:
                 total_hours_of_practice = educational_work_data[f'L{row}'].value
                 if total_hours_of_practice is None:
                     total_hours_of_practice = 0
-                Rich.debug_log(f"Итоговое количество часов практики: {total_hours_of_practice}")
+                total_hours_of_practice = ParserITP.rounding(total_hours_of_practice)
+                Rich.debug_log(f"Итоговое количество часов практики: "
+                               f"{total_hours_of_practice}")
 
                 # Часов ВКП - итог
                 total_hours_WRC = educational_work_data[f'M{row}'].value
                 if total_hours_WRC is None:
                     total_hours_WRC = 0
-                Rich.debug_log(f"Итоговое количество часов ВКР: {total_hours_WRC}")
+                total_hours_WRC = ParserITP.rounding(total_hours_WRC)
+                Rich.debug_log(f"Итоговое количество часов ВКР: "
+                               f"{total_hours_WRC}")
 
                 # Часов ГЭК - итог
                 total_hours_of_GEC = educational_work_data[f'N{row}'].value
                 if total_hours_of_GEC is None:
                     total_hours_of_GEC = 0
+                total_hours_of_GEC = ParserITP.rounding(total_hours_of_GEC)
                 Rich.debug_log(f"Итоговое количество часов ГЭК: {total_hours_of_GEC}")
 
                 # Часов дополнительных работ - итог
                 total_hours_of_additional_works = educational_work_data[f'O{row}'].value
                 if total_hours_of_additional_works is None:
                     total_hours_of_additional_works = 0
+                total_hours_of_additional_works = ParserITP.rounding(total_hours_of_additional_works)
                 Rich.debug_log(f"Итоговое количество часов "
-                               f"дополнительных работ: {total_hours_of_additional_works}")
+                               f"дополнительных работ: "
+                               f"{total_hours_of_additional_works}")
 
                 # Всего часов по плану - итог
                 total_hours_of_total_according_to_plan = educational_work_data[f'P{row}'].value
                 if total_hours_of_total_according_to_plan is None:
                     total_hours_of_total_according_to_plan = 0
+                total_hours_of_total_according_to_plan = ParserITP.rounding(
+                    total_hours_of_total_according_to_plan)
                 Rich.debug_log(f"Итоговое количество часов "
                                f"по плану: {total_hours_of_total_according_to_plan}")
 
@@ -574,6 +606,8 @@ class ParserITP:
                 total_hours_of_total_actually = educational_work_data[f'Q{row}'].value
                 if total_hours_of_total_actually is None:
                     total_hours_of_total_actually = 0
+                total_hours_of_total_actually = ParserITP.rounding(
+                    total_hours_of_total_actually)
                 Rich.debug_log(f"Итоговое количество "
                                f"часов фактически: {total_hours_of_total_actually}")
 
@@ -606,92 +640,141 @@ class ParserITP:
         num_row_total_info_hours_educational_work_for_year = educational_work_data.max_row - 1
 
         # Количество часов лекций - итог за год
-        total_hours_of_lectures_by_year = educational_work_data[f'E{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_lectures_by_year = educational_work_data[
+            f'E{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_lectures_by_year is None:
             total_hours_of_lectures_by_year = 0
+        total_hours_of_lectures_by_year = ParserITP.rounding(
+            total_hours_of_lectures_by_year)
         Rich.debug_log(f"Итоговое количество часов "
-                       f"лекций за год: {total_hours_of_lectures_by_year}")
+                       f"лекций за год: "
+                       f"{total_hours_of_lectures_by_year}")
 
         # Количество часов практик - итог за год
-        total_hours_of_practice_lessons_by_year = educational_work_data[f'F{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_practice_lessons_by_year = educational_work_data[
+            f'F{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_practice_lessons_by_year is None:
             total_hours_of_practice_lessons_by_year = 0
+        total_hours_of_practice_lessons_by_year = ParserITP.rounding(
+            total_hours_of_practice_lessons_by_year)
         Rich.debug_log(f"Итоговое количество часов "
-                       f"практики за год: {total_hours_of_practice_lessons_by_year}")
+                       f"практики за год: "
+                       f"{total_hours_of_practice_lessons_by_year}")
 
         # Количество часов лабораторных работ - итог за год
-        total_hours_of_laboratory_work_by_year = educational_work_data[f'G{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_laboratory_work_by_year = educational_work_data[
+            f'G{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_laboratory_work_by_year is None:
             total_hours_of_laboratory_work_by_year = 0
+        total_hours_of_laboratory_work_by_year = ParserITP.rounding(
+            total_hours_of_laboratory_work_by_year)
         Rich.debug_log(f"Итоговое количество часов "
-                       f"лабораторных работ за год: {total_hours_of_laboratory_work_by_year}")
+                       f"лабораторных работ за год: "
+                       f"{total_hours_of_laboratory_work_by_year}")
 
         # Количество часов консультаций - итог за год
-        total_hours_of_consultations_by_year = educational_work_data[f'H{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_consultations_by_year = educational_work_data[
+            f'H{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_consultations_by_year is None:
             total_hours_of_consultations_by_year = 0
+        total_hours_of_consultations_by_year = ParserITP.rounding(
+            total_hours_of_consultations_by_year)
         Rich.debug_log(f"Итоговое количество часов "
-                       f"консультаций за год: {total_hours_of_consultations_by_year}")
+                       f"консультаций за год: "
+                       f"{total_hours_of_consultations_by_year}")
 
         # Часов экзаменов - итог за год
-        total_hours_of_exams_by_year = educational_work_data[f'I{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_exams_by_year = educational_work_data[
+            f'I{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_exams_by_year is None:
             total_hours_of_exams_by_year = 0
+        total_hours_of_exams_by_year = ParserITP.rounding(
+            total_hours_of_exams_by_year)
         Rich.debug_log(f"Итоговое количество часов "
                        f"экзаменов за год: {total_hours_of_exams_by_year}")
 
         # Часов зачётов - итог за год
-        total_hours_of_credits_by_year = educational_work_data[f'J{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_credits_by_year = educational_work_data[
+            f'J{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_credits_by_year is None:
             total_hours_of_credits_by_year = 0
+        total_hours_of_credits_by_year = ParserITP.rounding(
+            total_hours_of_credits_by_year)
         Rich.debug_log(f"Итоговое количество часов "
                        f"зачётов за год: {total_hours_of_credits_by_year}")
 
         # Часов курсовых работ, курсовых проектов - итог за год
-        total_hours_of_terms_works_by_year = educational_work_data[f'K{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_terms_works_by_year = educational_work_data[
+            f'K{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_terms_works_by_year is None:
             total_hours_of_terms_works_by_year = 0
+        total_hours_of_terms_works_by_year = ParserITP.rounding(
+            total_hours_of_terms_works_by_year)
         Rich.debug_log(f"Итоговое количество часов курсовых работ, курсовых "
                        f"проектов за год: {total_hours_of_terms_works_by_year}")
 
         # Часов практики - итог за год
-        total_hours_of_practice_by_year = educational_work_data[f'L{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_practice_by_year = educational_work_data[
+            f'L{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_practice_by_year is None:
             total_hours_of_practice_by_year = 0
-        Rich.debug_log(f"Итоговое количество часов практики за год: {total_hours_of_practice_by_year}")
+        total_hours_of_practice_by_year = ParserITP.rounding(
+            total_hours_of_practice_by_year)
+        Rich.debug_log(f"Итоговое количество часов практики за год: "
+                       f"{total_hours_of_practice_by_year}")
 
         # Часов ВКП - итог за год
-        total_hours_WRC_by_year = educational_work_data[f'M{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_WRC_by_year = educational_work_data[
+            f'M{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_WRC_by_year is None:
             total_hours_WRC_by_year = 0
-        Rich.debug_log(f"Итоговое количество часов ВКР за год: {total_hours_WRC_by_year}")
+        total_hours_WRC_by_year = ParserITP.rounding(
+            total_hours_WRC_by_year)
+        Rich.debug_log(f"Итоговое количество часов ВКР за год: "
+                       f"{total_hours_WRC_by_year}")
 
         # Часов ГЭК - итог за год
-        total_hours_of_GEC_by_year = educational_work_data[f'N{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_GEC_by_year = educational_work_data[
+            f'N{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_GEC_by_year is None:
             total_hours_of_GEC_by_year = 0
-        Rich.debug_log(f"Итоговое количество часов ГЭК за год: {total_hours_of_GEC_by_year}")
+        total_hours_of_GEC_by_year = ParserITP.rounding(
+            total_hours_of_GEC_by_year)
+        Rich.debug_log(f"Итоговое количество часов ГЭК за год: "
+                       f"{total_hours_of_GEC_by_year}")
 
         # Часов дополнительных работ - итог за год
-        total_hours_of_additional_works_by_year = educational_work_data[f'O{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_additional_works_by_year = educational_work_data[
+            f'O{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_additional_works_by_year is None:
             total_hours_of_additional_works_by_year = 0
+        total_hours_of_additional_works_by_year = ParserITP.rounding(
+            total_hours_of_additional_works_by_year)
         Rich.debug_log(f"Итоговое количество часов "
-                       f"дополнительных работ за год: {total_hours_of_additional_works_by_year}")
+                       f"дополнительных работ за год: "
+                       f"{total_hours_of_additional_works_by_year}")
 
         # Всего часов по плану - итог за год
-        total_hours_of_total_according_to_plan_by_year = educational_work_data[f'P{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_total_according_to_plan_by_year = educational_work_data[
+            f'P{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_total_according_to_plan_by_year is None:
             total_hours_of_total_according_to_plan_by_year = 0
+        total_hours_of_total_according_to_plan_by_year = ParserITP.rounding(
+            total_hours_of_total_according_to_plan_by_year)
         Rich.debug_log(f"Итоговое количество часов "
-                       f"по плану за год: {total_hours_of_total_according_to_plan_by_year}")
+                       f"по плану за год: "
+                       f"{total_hours_of_total_according_to_plan_by_year}")
 
         # Всего часов фактически - итог за год
-        total_hours_of_total_actually_by_year = educational_work_data[f'Q{num_row_total_info_hours_educational_work_for_year}'].value
+        total_hours_of_total_actually_by_year = educational_work_data[
+            f'Q{num_row_total_info_hours_educational_work_for_year}'].value
         if total_hours_of_total_actually_by_year is None:
             total_hours_of_total_actually_by_year = 0
+        total_hours_of_total_actually_by_year = ParserITP.rounding(
+            total_hours_of_total_actually_by_year)
         Rich.debug_log(f"Итоговое количество "
-                       f"часов фактически за год: {total_hours_of_total_actually_by_year}")
+                       f"часов фактически за год: "
+                       f"{total_hours_of_total_actually_by_year}")
 
         summary_data_of_hours_teachers_educational_work_by_year = SummaryInfoOnHoursOfTeachersAcademicWork(
             summary_lectures_per_year = total_hours_of_lectures_by_year,
@@ -1107,91 +1190,103 @@ class ParserITP:
                 hours_of_lectures = additional_educational_work_data[f'E{row}'].value
                 if hours_of_lectures is None:
                     hours_of_lectures = 0
-                hours_of_lectures = round(float(hours_of_lectures), 1)
+                hours_of_lectures = ParserITP.rounding(hours_of_lectures)
                 Rich.debug_log(f"Часов лекций: {hours_of_lectures}")
 
                 # Количество часов практики
-                hours_of_practice_lessons = additional_educational_work_data[f'F{row}'].value
+                hours_of_practice_lessons = additional_educational_work_data[
+                    f'F{row}'].value
                 if hours_of_practice_lessons is None:
                     hours_of_practice_lessons = 0
-                hours_of_practice_lessons = round(float(hours_of_practice_lessons), 1)
+                hours_of_practice_lessons = ParserITP.rounding(hours_of_practice_lessons)
                 Rich.debug_log(f"Часов практики: {hours_of_practice_lessons}")
 
                 # Количество часов лабораторных работ
-                hours_of_laboratory_work = additional_educational_work_data[f'G{row}'].value
+                hours_of_laboratory_work = additional_educational_work_data[
+                    f'G{row}'].value
                 if hours_of_laboratory_work is None:
                     hours_of_laboratory_work = 0
-                hours_of_laboratory_work = round(float(hours_of_laboratory_work), 1)
+                hours_of_laboratory_work = ParserITP.rounding(hours_of_laboratory_work)
                 Rich.debug_log(f"Часов лабораторных работ: {hours_of_laboratory_work}")
 
                 # Количество часов консультаций
-                hours_of_consultations = additional_educational_work_data[f'H{row}'].value
+                hours_of_consultations = additional_educational_work_data[
+                    f'H{row}'].value
                 if hours_of_consultations is None:
                     hours_of_consultations = 0
                 hours_of_consultations = round(float(hours_of_consultations), 1)
                 Rich.debug_log(f"Часов консультаций: {hours_of_consultations}")
 
                 # Часов экзаменов
-                hours_of_exams = additional_educational_work_data[f'I{row}'].value
+                hours_of_exams = additional_educational_work_data[
+                    f'I{row}'].value
                 if hours_of_exams is None:
                     hours_of_exams = 0
                 hours_of_exams = round(float(hours_of_exams), 1)
                 Rich.debug_log(f"Часов экзаменов: {hours_of_exams}")
 
                 # Часов зачётов
-                hours_of_credits = additional_educational_work_data[f'J{row}'].value
+                hours_of_credits = additional_educational_work_data[
+                    f'J{row}'].value
                 if hours_of_credits is None:
                     hours_of_credits = 0
-                hours_of_credits = round(float(hours_of_credits), 1)
+                hours_of_credits = ParserITP.rounding(hours_of_credits)
                 Rich.debug_log(f"Часов зачётов: {hours_of_credits}")
 
                 # Часов курсовых работ, курсовых проектов
-                hours_of_terms_works = additional_educational_work_data[f'K{row}'].value
+                hours_of_terms_works = additional_educational_work_data[
+                    f'K{row}'].value
                 if hours_of_terms_works is None:
                     hours_of_terms_works = 0
-                hours_of_terms_works = round(float(hours_of_terms_works), 1)
+                hours_of_terms_works = ParserITP.rounding(hours_of_terms_works)
                 Rich.debug_log(f"Часов курсовых работ, курсовых проектов: {hours_of_terms_works}")
 
                 # Часов практики
-                hours_of_practice = additional_educational_work_data[f'L{row}'].value
+                hours_of_practice = additional_educational_work_data[
+                    f'L{row}'].value
                 if hours_of_practice is None:
                     hours_of_practice = 0
-                hours_of_practice = round(float(hours_of_practice), 1)
+                hours_of_practice = ParserITP.rounding(hours_of_practice)
                 Rich.debug_log(f"Часов практики: {hours_of_practice}")
 
                 # Часов ВКП
-                hours_WRC = additional_educational_work_data[f'M{row}'].value
+                hours_WRC = additional_educational_work_data[
+                    f'M{row}'].value
                 if hours_WRC is None:
                     hours_WRC = 0
-                hours_WRC = round(float(hours_WRC), 1)
+                hours_WRC = ParserITP.rounding(hours_WRC)
                 Rich.debug_log(f"Часов ВКР: {hours_WRC}")
 
                 # Часов ГЭК
-                hours_of_GEC = additional_educational_work_data[f'N{row}'].value
+                hours_of_GEC = additional_educational_work_data[
+                    f'N{row}'].value
                 if hours_of_GEC is None:
                     hours_of_GEC = 0
-                hours_of_GEC = round(float(hours_of_GEC), 1)
+                hours_of_GEC = ParserITP.rounding(hours_of_GEC)
                 Rich.debug_log(f"Часов ГЭК: {hours_of_GEC}")
 
                 # Часов дополнительных работ
-                hours_of_additional_works = additional_educational_work_data[f'O{row}'].value
+                hours_of_additional_works = additional_educational_work_data[
+                    f'O{row}'].value
                 if hours_of_additional_works is None:
                     hours_of_additional_works = 0
-                hours_of_additional_works = round(float(hours_of_additional_works), 1)
+                hours_of_additional_works = ParserITP.rounding(hours_of_additional_works)
                 Rich.debug_log(f"Часов дополнительных работ: {hours_of_additional_works}")
 
                 # Всего часов по плану
-                hours_of_total_according_to_plan = additional_educational_work_data[f'P{row}'].value
+                hours_of_total_according_to_plan = additional_educational_work_data[
+                    f'P{row}'].value
                 if hours_of_total_according_to_plan is None:
                     hours_of_total_according_to_plan = 0
                 hours_of_total_according_to_plan = round(float(hours_of_total_according_to_plan), 1)
                 Rich.debug_log(f"Всего часов по плану: {hours_of_total_according_to_plan}")
 
                 # Всего часов фактически
-                hours_of_total_actually = additional_educational_work_data[f'Q{row}'].value
+                hours_of_total_actually = additional_educational_work_data[
+                    f'Q{row}'].value
                 if hours_of_total_actually is None:
                     hours_of_total_actually = 0
-                hours_of_total_actually = round(float(hours_of_total_actually),1)
+                hours_of_total_actually = ParserITP.rounding(hours_of_total_actually)
                 Rich.debug_log(f"Всего часов фактически: {hours_of_total_actually}")
 
                 data_of_disciplines_in_semester = InformationOnDisciplineOfAcademicWork(
@@ -1350,6 +1445,7 @@ class ParserITP:
 
         Rich.success_log("Сведения о дополнительном объёме нагрузки "
                              "преподавателя получены")
+        Rich.debug_log(f"Записей: {len(list_of_disciplines_in_semester)}")
 
         teachers_educational_work = TeachersAdditionalWorkData(
             list_of_data_with_educational_work=list_of_disciplines_in_semester,
