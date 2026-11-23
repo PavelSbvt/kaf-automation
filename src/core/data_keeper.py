@@ -1,4 +1,5 @@
 import json
+import re
 from dataclasses import asdict
 from typing import List
 
@@ -141,14 +142,18 @@ def save_full_itp_data(file_path: str) -> None:
     :return: None
     """
     parsed_data = ParserITP.parse_full_information(file_path)
+
     Rich.debug_log(f"Выгрузка данных парсинга таблицы ИПРП в json")
+
+    plan_year = parsed_data.title_list_data.year_of_plan
+    plan_year = re.search(r"\d{4}", plan_year).group()
 
     teachers_name = parsed_data.general_data.name
     teachers_name = " ".join(teachers_name.split())
-    teachers_name = teachers_name.lower()
+    # teachers_name = teachers_name.lower()
     teachers_name = teachers_name.replace(" ", "-")
 
-    output_path = f"received_data/itp/itp-{teachers_name}.json"
+    output_path = f"received_data/itp/itp-{teachers_name}-{plan_year}.json"
     with open(output_path,
               "w", encoding="utf-8") as file:
         json.dump(asdict(parsed_data), file, ensure_ascii=False, indent=2)
