@@ -18,7 +18,9 @@ from core.models import (
     TeacherScientificAndResearchInfo,
     TeacherOrgAndPedagogicalInfo,
     RowDataProfessionalDevelopment,
-    TeachersProfessionalDevelopmentInfo)
+    TeachersProfessionalDevelopmentInfo,
+    TeachersAdditionalWorkData,
+    FullITP)
 from utils.output_rich import Rich
 from utils.utils_funcs import get_path_resources_file
 
@@ -26,60 +28,32 @@ from utils.utils_funcs import get_path_resources_file
 class ParserITP:
     """
     Класс-обёртка для функций парсинга данных из таблицы индивидуального плана работы
-     преподавателя на openpyxl
+     преподавателя на openpyxl.
+
+    Содержит статические методы для парсинга отдельных страниц таблицы индивидуального
+     плана работы преподавателя и функция для парсинга сразу всех страниц.
+
+    Для выгрузки данных использую методы из core/data_keeper.py, который выгрузает
+     данные парсинга в json словари
 
     Содержит функции для парсинга отдельных листов таблицы:
     * Общие сведения
     * Сводные данные
     * листы 1. , 1.1, 1.2, 2, 3, 4
 
-    (Функции для парсинга других листов писать не стал, так как мне показалось,
-    что они скорее всего заполняются от руки.
+    Парсит все листы, кроме листа "Закл.".
 
-    Или потом какие-нибудь напишу на всякий случай)
-
-    Функции собирают объекты датаклассов, которые хранятся в core/models.py -
-    датаклассы для обеъктов, хранящих полную информацию с листа,
-    вспомогательные датаклассы для хранения части информации с листа
-    и датаклассы для хранения информации со строк некоторых таблиц.
-
-    После сборки функции добавляют созданые объекты в массивы. Делал так временно для
-    хранения данных сразу о нескольких преподавателях в одном массиве. Планирую изменить
-    и создать метод для хранения единой информации по преподавателю со всеми данными,
-    какие напарсят функции.
-    """
-    ITP_TEACHERS_GENERAL_DATA: List[TeacherGeneralInfo] = []
-    """Список с объектами датаклассов с основной информацией преподавателя из ИПП"""
-
-    ITP_TEACHERS_SUMMARY_DATA: List[TeacherSummaryInfo] = []
-    """Список с объектами датаклассов со сводными данными по видам работ преподавателя"""
-
-    ITP_TEACHERS_EDUCATIONAL_DATA: List[FullInfoOnEducationWorkOfTeacher] = []
-    """Список с полной информацией по учебной работе преподавателя из ИПП"""
-
-    ITP_TEACHERS_EDUCATIONAL_AND_METHODICAL_DATA: List[
-        TeacherEducationalAndMethodicalWorkData] = []
-    """Список с объектами датаклассов с информацией 
-    по учебно-методической работе преподавателя из ИПП"""
-
-    ITP_TEACHERS_SCIENTIFIC_AND_RESEARCH_DATA: List[TeacherScientificAndResearchInfo] = []
-    """
-    Список для хранения информации о научно-исследовательской деятельности преподавателя
-    """
-
-    ITP_TEACHERS_ORG_AND_PEDAGOGICAL_DATA: List[TeacherOrgAndPedagogicalInfo] = []
-    """
-    Список для хранения сведений об организационной и воспитательной деятельности преподавателя
-    """
-
-    ITP_TEACHERS_PROFESSIONAL_DEVELOPMENT_DATA: List[TeachersProfessionalDevelopmentInfo] = []
-    """
-    Список для хранения информации о повышении квалификации преподавателя
+    Работает с моделями из core/models.py, сохраняя полученные данные в объекты датаклассав.
     """
 
     list_with_semesters_data: List[TeacherAcademicWorkPerSemester] = []
     """Вспомогательный массив для хранения информации по дисциплинам 
     из функции парсинга учебной работы преподавателя"""
+
+    list_with_data_of_teachers_additional_work: List[InformationOnDisciplineOfAcademicWork] = []
+    """Вспомогательный массив для хранения всех дисциплин, по которым у преподавателя 
+    есть дополнительная нагрузка
+    """
 
     @staticmethod
     def load_table(table_path: str) -> Workbook | None:
@@ -173,14 +147,15 @@ class ParserITP:
         return title_list_information
 
     @staticmethod
-    def parse_general_info_sheet(file_path: str) -> None:
+    def parse_general_info_sheet(
+            file_path: str) -> TeacherGeneralInfo:
         """
         Парсинг данных с листа "Общие сведения"
         из таблицы индивидуального плана преподавателя
 
         :param file_path: путь к таблице ИПРП
 
-        :return: None
+        :return: TeacherGeneralInfo - вернёт объект с полученными данными
         """
         individual_plan = ParserITP.load_table(get_path_resources_file(file_path))
         # Открываю лист с общими сведениями
@@ -283,16 +258,18 @@ class ParserITP:
             list_subjects_taught = teacher_list_subjects_taught
         )
 
-        ParserITP.ITP_TEACHERS_GENERAL_DATA.append(parsed_data)
         Rich.print_spacer()
 
-        return None
+        return parsed_data
 
     @staticmethod
-    def parse_summary_data_sheet(file_path: str) -> None:
+    def parse_summary_data_sheet(file_path: str) -> TeacherSummaryInfo:
         """
-        Функция для паргинга листа "Сводные данные" из таблицы ИПП
-        :return: None
+        Функция для паргинга листа "Сводные данные" из таблицы ИПРП
+
+        :param file_path: путь к файлу таблицы ИПРП
+
+        :return: TeacherSummaryInfo - возвращает объект с полученными данными
         """
         individual_plan = ParserITP.load_table(get_path_resources_file(file_path))
         # Открываю лист со сводными данными
@@ -346,11 +323,13 @@ class ParserITP:
 
         Rich.debug_log(f"Всего: {teachers_total_number_of_hours}")
 
-        ParserITP.ITP_TEACHERS_SUMMARY_DATA.append(summary_data_from_table)
         Rich.print_spacer()
 
+        return summary_data_from_table
+
     @staticmethod
-    def parse_educational_work_sheet(file_path: str) -> None:
+    def parse_educational_work_sheet(
+            file_path: str) -> FullInfoOnEducationWorkOfTeacher:
         """
         Функция для парсинга листа 1.1 "Учебная работа" из талицы ИПП для получения
         информации о дисциплинах, типах занятий, количестве часов, группах и
@@ -358,7 +337,7 @@ class ParserITP:
 
         :param file_path: путь к файлу таблицы ИПРП
 
-        :return: None
+        :return: FullInfoOnEducationWorkOfTeacher - объект с полученными данными
         """
         individual_plan = ParserITP.load_table(get_path_resources_file(file_path))
         # Открываю лист с учебной работой - лист 1.1.
@@ -746,16 +725,18 @@ class ParserITP:
             summary_info_about_educational_work_by_year = summary_data_of_hours_teachers_educational_work_by_year
         )
 
-        ParserITP.ITP_TEACHERS_EDUCATIONAL_DATA.append(teachers_educational_work)
         Rich.success_log("Добавлена информация о учебной работе преподавателя")
         ParserITP.list_with_semesters_data.clear()
 
+        return teachers_educational_work
+
     @staticmethod
-    def parse_educational_and_methodical_work_sheet(file_path: str) -> None:
+    def parse_educational_and_methodical_work_sheet(
+            file_path: str) -> TeacherEducationalAndMethodicalWorkData:
         """
         Функция для парсинга листа 1.2 таблицы ИПП. Парсит лист с учебно-методической работой
         :param file_path: путь к файлу таблицы ИПП
-        :return: None
+        :return: TeacherEducationalAndMethodicalWorkData - объект с полученными данными
         """
         individual_plan = ParserITP.load_table(get_path_resources_file(file_path))
         # Открываю лист с учебно-методической работой - лист 1.2.
@@ -809,17 +790,19 @@ class ParserITP:
 
         Rich.debug_log("Получена информация о учебно-методической работе преподавателя")
         Rich.debug_log(f"Всего работ: {len(list_of_types_of_jobs)}")
-        ParserITP.ITP_TEACHERS_EDUCATIONAL_AND_METHODICAL_DATA.append(education_and_methodical_info)
+
+        return education_and_methodical_info
 
     @staticmethod
-    def parse_scientific_research_activities_sheet(file_path: str) -> None:
+    def parse_scientific_research_activities_sheet(
+            file_path: str) -> TeacherScientificAndResearchInfo:
         """
         Функция для парсинга листа 2 таблицы ИПРП. Парсит лист с научно-исследовательской
          деятельностью
 
         :param file_path: путь к файлу таблицы ИПРП
 
-        :return: None
+        :return: TeacherScientificAndResearchInfo - объект с полученными данными
         """
         individual_plan = ParserITP.load_table(get_path_resources_file(file_path))
         # Открываю лист с научно-исследовательской работой - лист 2
@@ -873,17 +856,19 @@ class ParserITP:
 
         Rich.debug_log("Получена информация о научно-исследовательской работе преподавателя")
         Rich.debug_log(f"Всего работ: {len(list_of_types_of_jobs)}")
-        ParserITP.ITP_TEACHERS_SCIENTIFIC_AND_RESEARCH_DATA.append(scientific_and_research_info)
+
+        return scientific_and_research_info
 
     @staticmethod
-    def parse_organizational_and_pedagogical_activities_sheet(file_path: str) -> None:
+    def parse_organizational_and_pedagogical_activities_sheet(
+            file_path: str) -> TeacherOrgAndPedagogicalInfo:
         """
         Функция для парсинга информации по организационной и воспитательной деятельности
         преподавателя.
         Информация берётся из листа 3 таблицы ИПРП
 
         :param file_path: путь к файлу таблицы ИПРП
-        :return: None
+        :return: TeacherOrgAndPedagogicalInfo - объект с полученными данными
         """
         individual_plan = ParserITP.load_table(get_path_resources_file(file_path))
         # Открываю лист с организационно-воспитательной работой - лист 3
@@ -937,17 +922,19 @@ class ParserITP:
 
         Rich.debug_log("Получена информация о организационной и воспитательной деятельности преподавателя")
         Rich.debug_log(f"Всего работ: {len(list_of_types_of_jobs)}")
-        ParserITP.ITP_TEACHERS_ORG_AND_PEDAGOGICAL_DATA.append(organization_and_pedagogical_info)
+
+        return organization_and_pedagogical_info
 
     @staticmethod
-    def parse_professional_development_sheet(file_path: str) -> None:
+    def parse_professional_development_sheet(
+            file_path: str) -> TeachersProfessionalDevelopmentInfo:
         """
         Функция для парсинга информации о повышении квалификации преподавателя.
         Информация парсится из листа 4 таблицы ИПРП
 
         :param file_path: путь к файлу таблицы ИПРП
 
-        :return: None
+        :return: TeachersProfessionalDevelopmentInfo - вернёт объект с данными
         """
         individual_plan = ParserITP.load_table(get_path_resources_file(file_path))
         # Открываю лист с работой по повышению квалификации - лист 4
@@ -999,11 +986,11 @@ class ParserITP:
 
         Rich.debug_log("Получена информация "
                        "о повышении квалификации преподавателя")
-        if len(ParserITP.ITP_TEACHERS_PROFESSIONAL_DEVELOPMENT_DATA) == 0:
+        if len(list_of_types_of_activities) == 0:
             Rich.warning_log("Информации о повышении квалификации преподавателя пуста")
         Rich.debug_log(f"Всего работ: {len(list_of_types_of_activities)}")
-        ParserITP.ITP_TEACHERS_PROFESSIONAL_DEVELOPMENT_DATA.append(
-            professional_development_info)
+
+        return professional_development_info
 
     @staticmethod
     def parse_explanatory_notes_on_implementation_of_plan_sheet(file_path: str) -> List[str]:
@@ -1070,3 +1057,330 @@ class ParserITP:
         Rich.success_log("Данные по пояснительным запискам преподавателя собраны")
 
         return list_of_data
+
+    @staticmethod
+    def parse_application_additional_volume_sheet(
+            file_path:str) -> TeachersAdditionalWorkData:
+        """
+        Функция для парсинга листа "Прил. 1 - Доп. объем" таблицы ИПРП.
+        Парсит сведения об объёме нагрузки, выполняемых на условиях почасовой оплаты
+
+        :param file_path: путь к файлу таблицы ИПРП
+
+        :return: TeachersAdditionalWorkData возвращает объект датакласса
+         с напарсенными данными
+        """
+        individual_plan = ParserITP.load_table(get_path_resources_file(file_path))
+        # Открываю лист с учебной работой - лист "Прил. 1 - Доп. объем "
+        additional_educational_work_data = individual_plan["Прил. 1 - Доп. объем"]
+        Rich.print_spacer()
+        # Вывод шапки листа
+        Rich.simple_log(" ".join((additional_educational_work_data['A2'].value).split()))
+
+        current_semester = ""
+        current_group = ""
+
+        list_of_disciplines_in_semester: List[InformationOnDisciplineOfAcademicWork] = []
+
+        for row in range(8, additional_educational_work_data.max_row):
+            # парсинг данных
+
+            # парсинг по дисциплинам
+
+            if not additional_educational_work_data[f'A{row}'].value is None:
+
+                # Дальше парсинг данных по дисциплинам
+                # название дисциплины
+                subject_name = additional_educational_work_data[f'A{row}'].value
+                Rich.debug_log(f"Дисциплина: {subject_name}")
+
+                # Группа
+                if not additional_educational_work_data[f'C{row}'].value is None:
+                    current_group = additional_educational_work_data[f'C{row}'].value
+                    Rich.debug_log(f"Группа: {current_group}")
+
+                # Номер семестра (семестра обучения группы)
+                educational_semester = additional_educational_work_data[f'D{row}'].value
+                Rich.debug_log(f"Номер семестра: {educational_semester}")
+
+                # Количество часов лекций
+                hours_of_lectures = additional_educational_work_data[f'E{row}'].value
+                if hours_of_lectures is None:
+                    hours_of_lectures = 0
+                hours_of_lectures = round(float(hours_of_lectures), 1)
+                Rich.debug_log(f"Часов лекций: {hours_of_lectures}")
+
+                # Количество часов практики
+                hours_of_practice_lessons = additional_educational_work_data[f'F{row}'].value
+                if hours_of_practice_lessons is None:
+                    hours_of_practice_lessons = 0
+                hours_of_practice_lessons = round(float(hours_of_practice_lessons), 1)
+                Rich.debug_log(f"Часов практики: {hours_of_practice_lessons}")
+
+                # Количество часов лабораторных работ
+                hours_of_laboratory_work = additional_educational_work_data[f'G{row}'].value
+                if hours_of_laboratory_work is None:
+                    hours_of_laboratory_work = 0
+                hours_of_laboratory_work = round(float(hours_of_laboratory_work), 1)
+                Rich.debug_log(f"Часов лабораторных работ: {hours_of_laboratory_work}")
+
+                # Количество часов консультаций
+                hours_of_consultations = additional_educational_work_data[f'H{row}'].value
+                if hours_of_consultations is None:
+                    hours_of_consultations = 0
+                hours_of_consultations = round(float(hours_of_consultations), 1)
+                Rich.debug_log(f"Часов консультаций: {hours_of_consultations}")
+
+                # Часов экзаменов
+                hours_of_exams = additional_educational_work_data[f'I{row}'].value
+                if hours_of_exams is None:
+                    hours_of_exams = 0
+                hours_of_exams = round(float(hours_of_exams), 1)
+                Rich.debug_log(f"Часов экзаменов: {hours_of_exams}")
+
+                # Часов зачётов
+                hours_of_credits = additional_educational_work_data[f'J{row}'].value
+                if hours_of_credits is None:
+                    hours_of_credits = 0
+                hours_of_credits = round(float(hours_of_credits), 1)
+                Rich.debug_log(f"Часов зачётов: {hours_of_credits}")
+
+                # Часов курсовых работ, курсовых проектов
+                hours_of_terms_works = additional_educational_work_data[f'K{row}'].value
+                if hours_of_terms_works is None:
+                    hours_of_terms_works = 0
+                hours_of_terms_works = round(float(hours_of_terms_works), 1)
+                Rich.debug_log(f"Часов курсовых работ, курсовых проектов: {hours_of_terms_works}")
+
+                # Часов практики
+                hours_of_practice = additional_educational_work_data[f'L{row}'].value
+                if hours_of_practice is None:
+                    hours_of_practice = 0
+                hours_of_practice = round(float(hours_of_practice), 1)
+                Rich.debug_log(f"Часов практики: {hours_of_practice}")
+
+                # Часов ВКП
+                hours_WRC = additional_educational_work_data[f'M{row}'].value
+                if hours_WRC is None:
+                    hours_WRC = 0
+                hours_WRC = round(float(hours_WRC), 1)
+                Rich.debug_log(f"Часов ВКР: {hours_WRC}")
+
+                # Часов ГЭК
+                hours_of_GEC = additional_educational_work_data[f'N{row}'].value
+                if hours_of_GEC is None:
+                    hours_of_GEC = 0
+                hours_of_GEC = round(float(hours_of_GEC), 1)
+                Rich.debug_log(f"Часов ГЭК: {hours_of_GEC}")
+
+                # Часов дополнительных работ
+                hours_of_additional_works = additional_educational_work_data[f'O{row}'].value
+                if hours_of_additional_works is None:
+                    hours_of_additional_works = 0
+                hours_of_additional_works = round(float(hours_of_additional_works), 1)
+                Rich.debug_log(f"Часов дополнительных работ: {hours_of_additional_works}")
+
+                # Всего часов по плану
+                hours_of_total_according_to_plan = additional_educational_work_data[f'P{row}'].value
+                if hours_of_total_according_to_plan is None:
+                    hours_of_total_according_to_plan = 0
+                hours_of_total_according_to_plan = round(float(hours_of_total_according_to_plan), 1)
+                Rich.debug_log(f"Всего часов по плану: {hours_of_total_according_to_plan}")
+
+                # Всего часов фактически
+                hours_of_total_actually = additional_educational_work_data[f'Q{row}'].value
+                if hours_of_total_actually is None:
+                    hours_of_total_actually = 0
+                hours_of_total_actually = round(float(hours_of_total_actually),1)
+                Rich.debug_log(f"Всего часов фактически: {hours_of_total_actually}")
+
+                data_of_disciplines_in_semester = InformationOnDisciplineOfAcademicWork(
+                    name_of_discipline=subject_name,
+                    group=current_group,
+                    number_of_semester=educational_semester,
+                    lectures=hours_of_lectures,
+                    practical_training=hours_of_practice_lessons,
+                    laboratory_work=hours_of_laboratory_work,
+                    consultations=hours_of_consultations,
+                    exams=hours_of_exams,
+                    credits=hours_of_credits,
+                    term_papers_and_works=hours_of_terms_works,
+                    practice=hours_of_practice,
+                    WRC=hours_WRC,
+                    GEK=hours_of_GEC,
+                    additional_work=hours_of_additional_works,
+                    total_according_plan=hours_of_total_according_to_plan,
+                    total_actually=hours_of_total_actually
+                )
+
+                list_of_disciplines_in_semester.append(data_of_disciplines_in_semester)
+
+        num_row_total_info_hours_educational_work_for_year = additional_educational_work_data.max_row - 1
+
+        # Количество часов лекций - итог за год
+        total_hours_of_lectures_by_year = additional_educational_work_data[
+            f'E{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_lectures_by_year is None:
+            total_hours_of_lectures_by_year = 0
+        total_hours_of_lectures_by_year = round(float(total_hours_of_lectures_by_year),1)
+        Rich.debug_log(f"Итоговое количество часов "
+                       f"лекций за год: {total_hours_of_lectures_by_year}")
+
+        # Количество часов практик - итог за год
+        total_hours_of_practice_lessons_by_year = additional_educational_work_data[
+            f'F{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_practice_lessons_by_year is None:
+            total_hours_of_practice_lessons_by_year = 0
+        total_hours_of_practice_lessons_by_year = round(float(total_hours_of_practice_lessons_by_year),1)
+        Rich.debug_log(f"Итоговое количество часов "
+                       f"практики за год: {total_hours_of_practice_lessons_by_year}")
+
+        # Количество часов лабораторных работ - итог за год
+        total_hours_of_laboratory_work_by_year = additional_educational_work_data[
+            f'G{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_laboratory_work_by_year is None:
+            total_hours_of_laboratory_work_by_year = 0
+        total_hours_of_laboratory_work_by_year = round(float(total_hours_of_laboratory_work_by_year),1)
+        Rich.debug_log(f"Итоговое количество часов "
+                       f"лабораторных работ за год: {total_hours_of_laboratory_work_by_year}")
+
+        # Количество часов консультаций - итог за год
+        total_hours_of_consultations_by_year = additional_educational_work_data[
+            f'H{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_consultations_by_year is None:
+            total_hours_of_consultations_by_year = 0
+        total_hours_of_consultations_by_year = round(float(total_hours_of_consultations_by_year),1)
+        Rich.debug_log(f"Итоговое количество часов "
+                       f"консультаций за год: {total_hours_of_consultations_by_year}")
+
+        # Часов экзаменов - итог за год
+        total_hours_of_exams_by_year = additional_educational_work_data[
+            f'I{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_exams_by_year is None:
+            total_hours_of_exams_by_year = 0
+        total_hours_of_exams_by_year = round(float(total_hours_of_exams_by_year),1)
+        Rich.debug_log(f"Итоговое количество часов "
+                       f"экзаменов за год: {total_hours_of_exams_by_year}")
+
+        # Часов зачётов - итог за год
+        total_hours_of_credits_by_year = additional_educational_work_data[
+            f'J{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_credits_by_year is None:
+            total_hours_of_credits_by_year = 0
+        total_hours_of_credits_by_year = round(float(total_hours_of_credits_by_year),1)
+        Rich.debug_log(f"Итоговое количество часов "
+                       f"зачётов за год: {total_hours_of_credits_by_year}")
+
+        # Часов курсовых работ, курсовых проектов - итог за год
+        total_hours_of_terms_works_by_year = additional_educational_work_data[
+            f'K{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_terms_works_by_year is None:
+            total_hours_of_terms_works_by_year = 0
+        total_hours_of_terms_works_by_year = round(float(total_hours_of_terms_works_by_year),1)
+        Rich.debug_log(f"Итоговое количество часов курсовых работ, курсовых "
+                       f"проектов за год: {total_hours_of_terms_works_by_year}")
+
+        # Часов практики - итог за год
+        total_hours_of_practice_by_year = additional_educational_work_data[
+            f'L{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_practice_by_year is None:
+            total_hours_of_practice_by_year = 0
+        total_hours_of_practice_by_year = round(float(total_hours_of_practice_by_year), 1)
+        Rich.debug_log(f"Итоговое количество часов практики за год: "
+                       f"{total_hours_of_practice_by_year}")
+
+        # Часов ВКП - итог за год
+        total_hours_WRC_by_year = additional_educational_work_data[
+            f'M{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_WRC_by_year is None:
+            total_hours_WRC_by_year = 0.0
+        total_hours_WRC_by_year = round(float(total_hours_WRC_by_year),1)
+        Rich.debug_log(f"Итоговое количество часов ВКР за год: {total_hours_WRC_by_year}")
+
+        # Часов ГЭК - итог за год
+        total_hours_of_GEC_by_year = additional_educational_work_data[
+            f'N{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_GEC_by_year is None:
+            total_hours_of_GEC_by_year = 0
+        total_hours_of_GEC_by_year = round(float(total_hours_of_GEC_by_year),1)
+        Rich.debug_log(f"Итоговое количество часов ГЭК за год: {total_hours_of_GEC_by_year}")
+
+        # Часов дополнительных работ - итог за год
+        total_hours_of_additional_works_by_year = additional_educational_work_data[
+            f'O{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_additional_works_by_year is None:
+            total_hours_of_additional_works_by_year = 0
+        total_hours_of_additional_works_by_year = round(float(total_hours_of_additional_works_by_year),1)
+        Rich.debug_log(f"Итоговое количество часов "
+                       f"дополнительных работ за год: {total_hours_of_additional_works_by_year}")
+
+        # Всего часов по плану - итог за год
+        total_hours_of_total_according_to_plan_by_year = additional_educational_work_data[
+            f'P{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_total_according_to_plan_by_year is None:
+            total_hours_of_total_according_to_plan_by_year = 0
+        total_hours_of_total_according_to_plan_by_year = round(float(total_hours_of_total_according_to_plan_by_year),1)
+        Rich.debug_log(f"Итоговое количество часов "
+                       f"по плану за год: {total_hours_of_total_according_to_plan_by_year}")
+
+        # Всего часов фактически - итог за год
+        total_hours_of_total_actually_by_year = additional_educational_work_data[
+            f'Q{num_row_total_info_hours_educational_work_for_year}'].value
+        if total_hours_of_total_actually_by_year is None:
+            total_hours_of_total_actually_by_year = 0
+        total_hours_of_total_actually_by_year = round(float(total_hours_of_total_actually_by_year), 1)
+        Rich.debug_log(f"Итоговое количество "
+                       f"часов фактически за год: {total_hours_of_total_actually_by_year}")
+
+        summary_data_of_hours_teachers_additional_edu_work_by_year = SummaryInfoOnHoursOfTeachersAcademicWork(
+            summary_lectures_per_year=total_hours_of_lectures_by_year,
+            summary_practical_training_per_year=total_hours_of_practice_lessons_by_year,
+            summary_laboratory_work_per_year=total_hours_of_laboratory_work_by_year,
+            summary_consultations_per_year=total_hours_of_consultations_by_year,
+            summary_exams_per_year=total_hours_of_exams_by_year,
+            summary_credits_per_year=total_hours_of_credits_by_year,
+            summary_term_papers_and_works_per_year=total_hours_of_terms_works_by_year,
+            summary_practice_per_year=total_hours_of_practice_by_year,
+            summary_WRC_per_year=total_hours_WRC_by_year,
+            summary_GEK_per_year=total_hours_of_GEC_by_year,
+            summary_additional_work_per_year=total_hours_of_additional_works_by_year,
+            summary_total_according_plan_per_year=total_hours_of_total_according_to_plan_by_year,
+            summary_total_actually=total_hours_of_total_actually_by_year
+        )
+
+        Rich.success_log("Сведения о дополнительном объёме нагрузки "
+                             "преподавателя получены")
+
+        teachers_educational_work = TeachersAdditionalWorkData(
+            list_of_data_with_educational_work=list_of_disciplines_in_semester,
+            summary_data_of_hours_additional_work=summary_data_of_hours_teachers_additional_edu_work_by_year
+        )
+
+        Rich.success_log("Добавлена информация о дополнительном объёме нагрузки преподавателя")
+        ParserITP.list_with_data_of_teachers_additional_work.clear()
+
+        return teachers_educational_work
+
+    @staticmethod
+    def parse_full_information(file_path: str) -> FullITP:
+        """
+        Функция для парсинга по всем листам таблицы ИПРП
+        :param file_path: путь к файлу таблицы ИПРП
+        :return: FullITP - возвращает объект с полными данными таблицы ИПРП
+        """
+
+        full_itp_info = FullITP(
+            title_list_data = ParserITP.parse_title_sheet(file_path),
+            general_data = ParserITP.parse_general_info_sheet(file_path),
+            summary_data = ParserITP.parse_summary_data_sheet(file_path),
+            education_work_data = ParserITP.parse_educational_work_sheet(file_path),
+            educational_and_methodical_data = ParserITP.parse_educational_and_methodical_work_sheet(file_path),
+            scientific_and_research_data  = ParserITP.parse_scientific_research_activities_sheet(file_path),
+            organization_and_pedagogical_data = ParserITP.parse_organizational_and_pedagogical_activities_sheet(file_path),
+            professional_development_data = ParserITP.parse_professional_development_sheet(file_path),
+            explanatory_notes_on_implementation_of_plan_data = ParserITP.parse_explanatory_notes_on_implementation_of_plan_sheet(file_path),
+            teachers_explanatory_notes_data = ParserITP.parse_teachers_explanatory_notes_sheet(file_path),
+            application_additional_volume_data = ParserITP.parse_application_additional_volume_sheet(file_path)
+        )
+
+        return full_itp_info
