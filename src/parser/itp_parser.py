@@ -1004,3 +1004,69 @@ class ParserITP:
         Rich.debug_log(f"Всего работ: {len(list_of_types_of_activities)}")
         ParserITP.ITP_TEACHERS_PROFESSIONAL_DEVELOPMENT_DATA.append(
             professional_development_info)
+
+    @staticmethod
+    def parse_explanatory_notes_on_implementation_of_plan_sheet(file_path: str) -> List[str]:
+        """
+        Функция для парсинга листа 5 таблицы ИПРП
+        :param file_path: путь к файлу таблицы ИПРП
+        :return: List[str] - возвращает список с записями
+        """
+        individual_plan = ParserITP.load_table(get_path_resources_file(file_path))
+        # Открываю лист 5
+        explanatory_notes_data = individual_plan["5."]
+        Rich.print_spacer()
+        # Вывод шапки листа
+        Rich.simple_log(" ".join((explanatory_notes_data['A1'].value).split()))
+
+        list_of_data = []
+
+        # парсинг данных
+        for row in range(3, 45):
+            if not explanatory_notes_data[f'A{row}'].value is None:
+                data = explanatory_notes_data[f'A{row}'].value
+                list_of_data.append(data)
+
+        Rich.debug_log(f"Найдено записей: {len(list_of_data)}")
+
+        if len(list_of_data) == 0:
+            Rich.debug_log("Записей не найдено")
+
+        Rich.success_log("Данные по изменениям, вносимым в ИПРП в процессе его "
+                         "выполнения собраны")
+
+        return list_of_data
+
+    @staticmethod
+    def parse_teachers_explanatory_notes_sheet(file_path: str) -> List[str]:
+        """
+        Функция для парсинга листа 6. таблицы ИПРП с данными по пояснительным
+        запискам преподавателя
+
+        :param file_path: путь к файлу таблицы ИПРП
+
+        :return: List[str] - список записей с пояснительными записками преподавателя
+        """
+        individual_plan = ParserITP.load_table(get_path_resources_file(file_path))
+        # Открываю лист 6.
+        teachers_explanatory_notes_data = individual_plan["6."]
+        Rich.print_spacer()
+        # Вывод шапки листа
+        Rich.simple_log(" ".join((teachers_explanatory_notes_data['A1'].value).split()))
+
+        list_of_data = []
+
+        # парсинг данных
+        for row in range(3, 45):
+            if not teachers_explanatory_notes_data[f'A{row}'].value is None:
+                data = teachers_explanatory_notes_data[f'A{row}'].value
+                list_of_data.append(data)
+
+        Rich.debug_log(f"Найдено записей: {len(list_of_data)}")
+
+        if len(list_of_data) == 0:
+            Rich.debug_log("Записей не найдено")
+
+        Rich.success_log("Данные по пояснительным запискам преподавателя собраны")
+
+        return list_of_data
