@@ -12,6 +12,7 @@ from core.models import (
     TeacherScientificAndResearchInfo,
     TeacherOrgAndPedagogicalInfo,
     TeachersProfessionalDevelopmentInfo)
+from parser.itp_parser import ParserITP
 from utils.output_rich import Rich
 
 
@@ -125,4 +126,31 @@ def save_itp_professional_development_data(
                   ensure_ascii=False, indent=2)
     Rich.success_log("Данные сохранены: "
                      "received_data/itp-teachers-professional_development-data.json")
+    Rich.print_spacer()
+
+
+def save_full_itp_data(file_path: str) -> None:
+    """
+    Функция для выгрузки данных, полученных с помощью парсинга таблицы ИПРП
+    на openpyxl, в json. Сохраняет в json с фио преподавателя.
+
+    Сначала парсит данные, потом выгружает их в json словарь
+
+    :param file_path: путь к таблице ИПРП
+
+    :return: None
+    """
+    parsed_data = ParserITP.parse_full_information(file_path)
+    Rich.debug_log(f"Выгрузка данных парсинга таблицы ИПРП в json")
+
+    teachers_name = parsed_data.general_data.name
+    teachers_name = " ".join(teachers_name.split())
+    teachers_name = teachers_name.lower()
+    teachers_name = teachers_name.replace(" ", "-")
+
+    output_path = f"received_data/itp/itp-{teachers_name}.json"
+    with open(output_path,
+              "w", encoding="utf-8") as file:
+        json.dump(asdict(parsed_data), file, ensure_ascii=False, indent=2)
+    Rich.success_log(f"Данные сохранены: {output_path}")
     Rich.print_spacer()
