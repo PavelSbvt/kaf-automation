@@ -3,7 +3,7 @@ from typing import List
 
 from openpyxl import load_workbook, Workbook
 
-from core.models import (
+from parser.itp_models import (
     InfoFromTitlePage,
     TeacherGeneralInfo,
     DataNamesOfWorksFromSummaryInfo,

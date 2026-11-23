@@ -3,11 +3,9 @@ import re
 from dataclasses import asdict
 from typing import List
 
-from core.models import (
+from parser.itp_models import (
     TeacherGeneralInfo,
-    DataNamesOfWorksFromSummaryInfo,
     TeacherSummaryInfo,
-    TeacherAcademicWorkPerSemester,
     FullInfoOnEducationWorkOfTeacher,
     TeacherEducationalAndMethodicalWorkData,
     TeacherScientificAndResearchInfo,
