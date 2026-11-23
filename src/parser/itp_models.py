@@ -1,3 +1,4 @@
+"""Файл с моделями для класса-парсера ИПРП"""
 from dataclasses import dataclass
 from typing import List
 

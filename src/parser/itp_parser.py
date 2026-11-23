@@ -95,6 +95,7 @@ class ParserITP:
         individual_plan = ParserITP.load_table(get_path_resources_file(file_path))
         # Открываю титульный лист
         tit_list_info = individual_plan["Тит. лист"]
+        Rich.simple_log(f"Индивидуальный лист работы преподавателя")
         Rich.print_spacer()
 
         # парсинг
