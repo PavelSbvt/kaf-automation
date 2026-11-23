@@ -113,7 +113,6 @@ class TeacherSummaryInfo:
 class InformationOnDisciplineOfAcademicWork:
     """
     Датакласс для хранения информации по дисциплине из учебной работы преподавателя.
-    Информация из листа 1.1 таблицы ИПП
     """
     # Наименование дисциплины
     name_of_discipline: str
@@ -362,3 +361,55 @@ class TeachersProfessionalDevelopmentInfo:
     Массив с данными по наименованию мероприятия, его трудоёмкости в часах и 
     отметки о выполнении с реквизитами удостоверяющего документа
     """
+
+
+@dataclass
+class TeachersAdditionalWorkData:
+    """
+    Датакласс для хранения сведений о дополнительном объёме нагрузки преподавателя
+    из соответствующего листа таблицы ИПРП
+    """
+    list_of_data_with_educational_work: List[InformationOnDisciplineOfAcademicWork]
+    """Список с дисциплинами, группами, часами нагрузки по лекциям, лабораторным 
+    работам, практикам и пр."""
+    summary_data_of_hours_additional_work: SummaryInfoOnHoursOfTeachersAcademicWork
+    """Информация по итоговому количеству часов дополнительной нагрузки преподавателя
+     за год"""
+
+
+@dataclass
+class FullITP:
+    """Модель для хранения данных, которые удалось напарсить со всем таблицы ИПРП"""
+
+    title_list_data: InfoFromTitlePage
+    """Информация с титульного листа"""
+
+    general_data: TeacherGeneralInfo
+    """Данные листа общих сведений"""
+
+    summary_data: TeacherSummaryInfo
+    """Данные из листа сводных данных """
+
+    education_work_data: FullInfoOnEducationWorkOfTeacher
+    """Информация о учебной работе"""
+
+    educational_and_methodical_data: TeacherEducationalAndMethodicalWorkData
+    """Информация об учебно-методической работе"""
+
+    scientific_and_research_data: TeacherScientificAndResearchInfo
+    """Информация о научно-исследовательской деятельности"""
+
+    organization_and_pedagogical_data: TeacherOrgAndPedagogicalInfo
+    """Информация об организационно-воспитательной деятельности"""
+
+    professional_development_data: TeachersProfessionalDevelopmentInfo
+    """Информация о повышении квалификации"""
+
+    explanatory_notes_on_implementation_of_plan_data: List[str]
+    """Информация по изменениям ИПРП в процессе его выполнения"""
+
+    teachers_explanatory_notes_data: List[str]
+    """Информация по пояснительным запискам преподавателя по выполнению плана"""
+
+    application_additional_volume_data: TeachersAdditionalWorkData
+    """Информация об дополнительной учебной нагрузке преподавателя"""
