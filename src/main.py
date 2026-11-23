@@ -8,11 +8,13 @@ from core.data_keeper import (
     save_itp_professional_development_data,
     save_full_itp_data)
 from parser.itp_parser import ParserITP
+from parser.sapr_report_parser import ParserReportSAPR
 
 
 def main():
 
-    save_full_itp_data("tables/itp/individ_plrpr2023 Обухов.xlsx")
+    # save_full_itp_data("tables/itp/individ_plrpr2023 Обухов.xlsx")
+    ParserReportSAPR.parse_composition_of_department_sheet("tables/sapr_report/Отчет САПР.xlsx")
 
 
 if __name__ == "__main__":
