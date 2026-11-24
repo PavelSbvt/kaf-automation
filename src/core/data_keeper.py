@@ -12,6 +12,7 @@ from parser.itp_models import (
     TeacherOrgAndPedagogicalInfo,
     TeachersProfessionalDevelopmentInfo)
 from parser.itp_parser import ParserITP
+from parser.sapr_report_parser import ParserReportSAPR
 from utils.output_rich import Rich
 
 
@@ -152,6 +153,32 @@ def save_full_itp_data(file_path: str) -> None:
     teachers_name = teachers_name.replace(" ", "-")
 
     output_path = f"received_data/itp/itp-{teachers_name}-{plan_year}.json"
+    with open(output_path,
+              "w", encoding="utf-8") as file:
+        json.dump(asdict(parsed_data), file, ensure_ascii=False, indent=2)
+    Rich.success_log(f"Данные сохранены: {output_path}")
+    Rich.print_spacer()
+
+
+def save_full_sapr_report_data(file_path: str) -> None:
+    """
+    Функция для выгрузки данных, полученных с помощью парсинга таблицы Отчёта САПР
+    на openpyxl, в json. Сохраняет в json с годом отчёта
+
+    Сначала парсит данные, потом выгружает их в json словарь
+
+    :param file_path: путь к таблице Отчёта САПР
+
+    :return: None
+    """
+    parsed_data = ParserReportSAPR.parse_full_info(file_path)
+
+    Rich.debug_log(f"Выгрузка данных парсинга таблицы Отчёта САПР в json")
+
+    report_year = parsed_data.title_info.report_by_year
+    report_year = re.search(r"\d{4}", report_year).group()
+
+    output_path = f"received_data/sapr_report/sapr-report-{report_year}.json"
     with open(output_path,
               "w", encoding="utf-8") as file:
         json.dump(asdict(parsed_data), file, ensure_ascii=False, indent=2)

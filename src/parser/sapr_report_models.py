@@ -48,3 +48,75 @@ class MemberOfDepartment:
 
     academical_title: str
     """Учёное звание"""
+
+
+@dataclass
+class ReportInfo:
+    """
+    Класс для хранения данных листа Отчёт таблицы Отчёт САПР.
+    """
+    year_of_report: str
+    """За какой год отчёт"""
+
+    hours_of_fact_educational_load: float
+    """Часов фактического общего объёма работы на кафедре"""
+
+    explanation_of_reasons_for_rejection_info: str
+    """Объяснение причин отклонений"""
+
+    hours_lectures: float
+    """Часов лекции"""
+
+    practical_training: float
+    """Часов практические занятия"""
+
+    hours_laboratory_work: float
+    """Часов лабораторные работы"""
+
+    hours_consultations: float
+    """Часов консультации"""
+
+    hours_exams: float
+    """Часов экзамены"""
+
+    hours_credits: float
+    """Часов эачётов"""
+
+    term_papers_and_works: float
+    """Курсовые работы, курсовые проекты"""
+
+    practice: float
+    """Практика"""
+
+    WRC: float
+    """ВКР"""
+
+    GEK: float
+    """ГЭК"""
+
+    additional_work: float
+    """Дополнительные работы"""
+
+    total_according: float
+    """Итого часов фактического объёма нагрузки"""
+
+    hours_by_12_column: float
+    """
+    Из столбца 12 дополнительный объем нагрузки, в том числе выполненной 
+    на условиях почасовой оплаты
+    """
+
+
+@dataclass
+class FullInfoOfReport:
+    """
+    Датакласс для хранения полной информации по отчёту САПРа
+    """
+    title_info: TitleInfo
+    """Информация с титульного листа"""
+
+    department_structure: List[MemberOfDepartment]
+    """Список с составом кафедры (элемент списка - преподаватель)"""
+
+    report_info: ReportInfo
+    """Информация из листа отчёта"""
