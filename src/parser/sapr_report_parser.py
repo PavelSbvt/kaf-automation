@@ -280,3 +280,111 @@ class ParserReportSAPR:
 
         Rich.debug_log("Получены данные парсинга Отчёта САПРа")
         return full_parsed_info
+    
+    @staticmethod
+    def parse_teachers_report_sheet(file_path: str) -> None:
+        """
+        Функция для пирсинга ласта отчёта о выполнении индивидуального учебного
+        плана/договора о возмездном оказании преподавательских услуг таблицы отчёта САПР
+
+        :param file_path: путь к файлу таблицы Отчёта САПРа
+
+        :return: None
+        """
+        sapr_report = load_table(get_path_resources_file(file_path))
+
+        # Получение всех листов отчёта
+        sapr_report_sheets = sapr_report.sheetnames
+        Rich.debug_log("Найдены листы таблицы:")
+        for sheet in sapr_report_sheets:
+            Rich.debug_log(f"   {sheet}")
+
+        # листы, которые не надо парсить:
+        black_list_of_sheet = ["Титульный лист", "Состав кафедры", "Справочник", "Отчет"]
+
+        # Удаление из списка не нужных листов с помощью записи подходящих листов во
+        # временный список и перенос их в основной список с листами отчёта
+        clear_sheet = []
+
+        for element in sapr_report_sheets:
+            if element in black_list_of_sheet:
+                continue
+            else:
+                clear_sheet.append(element)
+
+        sapr_report_sheets.clear()
+        sapr_report_sheets = clear_sheet
+
+        # Вывод подходящих листов (с отчётами преподавателей)
+        Rich.debug_log("Подходящие листы таблицы:")
+        for sheet in sapr_report_sheets:
+            Rich.debug_log(f"   {sheet}")
+
+        Rich.debug_log("Обработка подходящих листов")
+
+        # обработка каждого листа
+        for list in sapr_report_sheets:
+            Rich.print_spacer()
+            Rich.debug_log(f"Обработка листа: {list}")
+            # Открываю лист отчёта преподавателя
+            report_info = sapr_report[f"{list}"]
+
+            list_of_teachers_data = []
+            # массив с объектами данных из отчётов преподавателей
+
+            if (not report_info['A14'].value is None
+                or report_info['A14'].value == 0):
+                # учебный год отчёта
+                year_of_teachers_report = report_info['A3'].value
+                Rich.simple_log(f"Отчёт о выполнении учебной работы "
+                                f"{year_of_teachers_report}")
+
+                # ФИО
+                teachers_fio = report_info['E5'].value
+                Rich.debug_log(f"ФИО преподавателя: {teachers_fio}")
+
+                # условия привлечения
+                terms_of_attractions = report_info['E6'].value
+                Rich.debug_log(f"Условия привлечения: {terms_of_attractions}")
+
+                # Должность
+                teachers_post = report_info['E7'].value
+                Rich.debug_log(f"Должность: {teachers_post}")
+
+                # Учёная степень
+                academical_degree = report_info['E8'].value
+                Rich.debug_log(f"Учёная степень: {academical_degree}")
+
+                # Учёное звание
+                academical_title = report_info['E9'].value
+                Rich.debug_log(f"Учёное звание: {academical_title}")
+
+                # Общий объем учебной нагрузки за учебный год, астрономических часов
+                summary_value_of_educational_load_by_year_of_plan = report_info[
+                                                                        'A14'].value
+                summary_value_of_educational_load_by_year_of_plan = rounding(
+                    summary_value_of_educational_load_by_year_of_plan)
+                Rich.debug_log(f"общий объём учебной работы по плану за год: "
+                               f"{summary_value_of_educational_load_by_year_of_plan}")
+
+                # Фактический объём часов учебной работы
+                summary_value_of_educational_load_by_year_fact = report_info['C14'].value
+                summary_value_of_educational_load_by_year_fact = rounding(
+                    summary_value_of_educational_load_by_year_fact)
+                Rich.debug_log(f"общий объём учебной работы по факту за год: "
+                               f"{summary_value_of_educational_load_by_year_fact}")
+
+                # Объяснение причин отклонений
+                explanation_of_reasons_for_deviations = report_info['J12'].value
+                if explanation_of_reasons_for_deviations is None:
+                    explanation_of_reasons_for_deviations = "Не указано"
+                Rich.debug_log(f"Объяснение причин отклонений: "
+                               f"{explanation_of_reasons_for_deviations}")
+
+                # Парсинг данных из таблицы по часам с разделением по видам работы
+
+
+                Rich.print_spacer()
+            else:
+                Rich.warning_log(f"Лист {list} - пустой")
+                Rich.print_spacer()

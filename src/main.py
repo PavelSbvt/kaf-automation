@@ -16,8 +16,8 @@ def main():
 
     # save_full_itp_data("tables/itp/individ_plrpr2023 Обухов.xlsx")
     # ParserReportSAPR.parse_composition_of_department_sheet("tables/sapr_report/Отчет САПР.xlsx")
-    # ParserReportSAPR.parse_full_info("tables/sapr_report/Отчет САПР.xlsx")
-    save_full_sapr_report_data("tables/sapr_report/Отчет САПР.xlsx")
+    ParserReportSAPR.parse_teachers_report_sheet("tables/sapr_report/Отчет САПР.xlsx")
+    # save_full_sapr_report_data("tables/sapr_report/Отчет САПР.xlsx")
 
 if __name__ == "__main__":
     main()
